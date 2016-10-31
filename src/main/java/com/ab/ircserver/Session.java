@@ -78,5 +78,9 @@ public class Session {
 	public boolean inRoom() {
 		return room != Room.UNDEFINED;
 	}
+
+	public void println(String string) {
+		channel.writeAndFlush(string + "\r\n");
+	}
 	
 }

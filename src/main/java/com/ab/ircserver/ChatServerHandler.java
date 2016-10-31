@@ -46,7 +46,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 			String argStr = commandStr.substring(LOGIN.length()).trim();
 			Matcher matcher = SPACE.matcher(argStr);
 			if (!matcher.matches()) {
-				ctx.writeAndFlush("Wrong command. Expected: /login name password\r\n");
+				session.println("Wrong command. Expected: /login name password");
 				return;
 			}
 			String name = matcher.group(1);
@@ -58,12 +58,12 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 				session = new Session(user, ctx.channel());
 				session.printWelcome();
 			} catch (WrongPasswordException e) {
-				ctx.writeAndFlush("Wrong password.\n");
+				session.println("Wrong password.");
 				return;
 			}
 		} else if (commandStr.startsWith(JOIN)) {
 			if (session.isAnonimous()) {
-				ctx.writeAndFlush("Please login: /login name password\r\n");
+				session.println("Please login: /login name password");
 				return;
 			}
 			String roomName = commandStr.substring(JOIN.length()).trim();
@@ -78,19 +78,19 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 			session = null;
 		} else if (commandStr.startsWith(USERS)) {
 			if (session.isAnonimous()) {
-				ctx.writeAndFlush("Please login: /login name password\r\n");
+				session.println("Start with: /login name password");
 				return;
 			} else if (!session.inRoom()) {
-				ctx.writeAndFlush("Please join: /join channel\r\n");
+				session.println("Next: /join channel");
 				return;
 			}
 			session.printUsers();
 		} else {
 			if (session.isAnonimous()) {
-				ctx.writeAndFlush("Please login: /login name password\r\n");
+				session.println("Start with: /login name password");
 				return;
 			} else if (!session.inRoom()) {
-				ctx.writeAndFlush("Please join: /join channel\r\n");
+				session.println("Next: /join channel");
 				return;
 			}
 			Message msg = new Message(session.user(), commandStr);
