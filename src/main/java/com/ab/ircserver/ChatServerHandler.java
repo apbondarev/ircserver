@@ -63,7 +63,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 			}
 		} else if (commandStr.startsWith(JOIN)) {
 			if (session.isAnonimous()) {
-				session.println("Please login: /login name password");
+				session.println("Start with: /login name password");
 				return;
 			}
 			String roomName = commandStr.substring(JOIN.length()).trim();
@@ -81,7 +81,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 				session.println("Start with: /login name password");
 				return;
 			} else if (!session.inRoom()) {
-				session.println("Next: /join channel");
+				session.println("/join channel");
 				return;
 			}
 			session.printUsers();
@@ -90,7 +90,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 				session.println("Start with: /login name password");
 				return;
 			} else if (!session.inRoom()) {
-				session.println("Next: /join channel");
+				session.println("/join channel");
 				return;
 			}
 			Message msg = new Message(session.user(), commandStr);
