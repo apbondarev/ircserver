@@ -8,7 +8,8 @@ Command set for this server:
 
 /login name password — if user not exists create profile else login
 
-/join channel —try to join channel (max 10 active clients per channel is allowed) If client’s limit exceeded - send error, otherwise join channel and send last 10 messages of activity
+/join channel — try to join channel (max 10 active clients per channel is allowed). 
+    If client’s limit exceeded - send error, otherwise join channel and send last 10 messages of activity
 
 /leave - disconnect client
 

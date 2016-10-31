@@ -4,27 +4,27 @@ import java.time.LocalDateTime;
 
 public class Message {
 
-    private final User from;
-    private final LocalDateTime when;
-    private final String text;
-    
-    public Message(User from, LocalDateTime when, String text) {
-        super();
-        this.from = from;
-        this.when = when;
-        this.text = text;
-    }
+	private final User from;
+	private final LocalDateTime when;
+	private final String text;
 
-    public User from() {
-        return from;
-    }
+	public Message(User from, String text) {
+		super();
+		this.from = from;
+		this.when = LocalDateTime.now();
+		this.text = text;
+	}
 
-    public LocalDateTime when() {
-        return when;
-    }
+	public User from() {
+		return from;
+	}
 
-    public String text() {
-        return text;
-    }
-    
+	public LocalDateTime when() {
+		return when;
+	}
+
+	public String text() {
+		return text;
+	}
+
 }

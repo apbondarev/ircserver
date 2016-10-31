@@ -9,6 +9,8 @@ public class User {
 
     // A random string that is appended to the password before hashing it
     private static final String SALT = System.getProperty("ircserver.password.salt", "nU77fQM43KLTGLVjBe9k");
+
+	public static final User ANONIMOUS = new User("anonimous", "password".getBytes(StandardCharsets.UTF_8));
     
     private final String name;
     private byte[] passwordMd5;
