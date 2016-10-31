@@ -19,6 +19,11 @@ public class Server {
 
     final int port;
 
+    public Server(int port) {
+    	super();
+    	this.port = port;
+    }
+    
     public static void main(String[] args) {
         int port;
         if (args.length > 0) {
@@ -27,11 +32,6 @@ public class Server {
             port = 8080;
         }
         new Server(port).run();
-    }
-
-    public Server(int port) {
-        super();
-        this.port = port;
     }
 
     private void run() {
@@ -45,10 +45,9 @@ public class Server {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
-                            pipeline.addFirst("string decoder", new StringDecoder(CharsetUtil.UTF_8));
                             pipeline.addLast("string delimiter", new DelimiterBasedFrameDecoder(255, Delimiters.lineDelimiter()));
+                            pipeline.addLast("string decoder", new StringDecoder(CharsetUtil.UTF_8));
                             pipeline.addLast("string encoder", new StringEncoder(CharsetUtil.UTF_8));
-                            
                             pipeline.addLast("command handler", new ChatServerHandler());
                         }
                     })

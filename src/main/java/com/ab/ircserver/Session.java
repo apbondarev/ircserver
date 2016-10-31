@@ -32,6 +32,10 @@ public class Session {
 		return user;
 	}
 	
+	public Channel channel() {
+		return channel;
+	}
+	
 	public void printWelcome() {
 		channel.writeAndFlush("Welcome " + user.name() + "!\r\n");
 	}
@@ -82,5 +86,5 @@ public class Session {
 	public void println(String string) {
 		channel.writeAndFlush(string + "\r\n");
 	}
-	
+
 }
