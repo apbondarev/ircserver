@@ -2,14 +2,14 @@ package com.ab.ircserver;
 
 public interface ChatState {
 
-	ChatState login(String name, byte[] password);
+	ChatState login(Session session, String name, byte[] password);
 	
-	ChatState join(String roomName);
+	ChatState join(Session session, String roomName);
 	
-	ChatState leave();
+	ChatState leave(Session session);
 	
-	ChatState printUsers();
+	ChatState printUsers(Session session);
 	
-	ChatState sendMessage(Message msg);
+	ChatState sendMessage(Session session, Message msg);
 	
 }

@@ -7,37 +7,30 @@ import io.netty.channel.ChannelFuture;
 
 public class Session {
 
-	private final User user;
+	private User user = User.ANONIMOUS;
 	private final Channel channel;
 	private Room room = Room.UNDEFINED;
-	private final boolean anonimous;
 
-	public Session(User user, Channel channel) {
-		this(user, channel, false);
-	}
-	
-	private Session(User user, Channel channel, boolean anonimous) {
-		Objects.requireNonNull(user);
+	private Session(Channel channel) {
 		Objects.requireNonNull(channel);
-		this.user = user;
 		this.channel = channel;
-		this.anonimous = anonimous;
 	}
 	
 	public static Session anonimous(Channel channel) {
-		return new Session(User.ANONIMOUS, channel, true);
+		return new Session(channel);
 	}
 
 	public User user() {
 		return user;
 	}
 	
-	public Channel channel() {
-		return channel;
+	public void auth(User user) {
+	    this.user = user;
+	    channel.writeAndFlush("Welcome " + user.name() + "!\r\n");
 	}
 	
-	public void printWelcome() {
-		channel.writeAndFlush("Welcome " + user.name() + "!\r\n");
+	public Channel channel() {
+		return channel;
 	}
 	
 	public void printUsers() {
@@ -76,7 +69,7 @@ public class Session {
 	}
 
 	public boolean isAnonimous() {
-		return anonimous;
+		return user == User.ANONIMOUS;
 	}
 
 	public boolean inRoom() {
