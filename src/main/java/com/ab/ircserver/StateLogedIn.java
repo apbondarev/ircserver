@@ -2,9 +2,6 @@ package com.ab.ircserver;
 
 import java.util.List;
 
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-
 public class StateLogedIn implements ChatState {
 	
     public static final ChatState INSTANCE = new StateLogedIn();
@@ -34,13 +31,6 @@ public class StateLogedIn implements ChatState {
             session.println("Max 10 active clients per channel is allowed.");
             return this;
         }
-	}
-
-	@Override
-	public ChatState leave(Session session) {
-		ChannelFuture future = session.leave();
-		future.addListener(ChannelFutureListener.CLOSE);
-		return StateDisconnected.INSTANCE;
 	}
 
 	@Override
