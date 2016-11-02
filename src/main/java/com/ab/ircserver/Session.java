@@ -1,6 +1,7 @@
 package com.ab.ircserver;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -50,8 +51,7 @@ public class Session {
 			room = newRoom;
 			room.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
 			List<Message> lastMessages = room.lastMessages();
-            lastMessages.forEach(this::send);
-            flush();
+			send(lastMessages);
 		} else {
 			throw new MaxActiveClientsException("Max 10 active clients per channel is allowed.");
 		}
@@ -65,12 +65,18 @@ public class Session {
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
 
-	public void send(Message msg) {
+	private void sendNoFlush(Message msg) {
 		channel.write(msg.from().name() + ": " + msg.text() + "\r\n");
 	}
 	
-	public void flush() {
+	public void send(Message msg) {
+		sendNoFlush(msg);
 		channel.flush();
+	}
+	
+	public void send(Collection<Message> messages) {
+		messages.forEach(this::sendNoFlush);
+        channel.flush();
 	}
 
 	public void sendInRoom(Message msg) {

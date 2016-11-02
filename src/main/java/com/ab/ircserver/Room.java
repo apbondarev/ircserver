@@ -14,8 +14,6 @@ public class Room {
 
 	public static final Room UNDEFINED = new Room("undefined");
 
-	private static final int LAST_MESSAGES_COUNT = 10;
-
 	private final String name;
 	private final BlockingQueue<Session> sessions = new ArrayBlockingQueue<>(CAPACITY);
 	private final List<Message> messages = new ArrayList<>();
@@ -55,25 +53,21 @@ public class Room {
 	public void send(Message msg) {
 		lock.lock();
 		try {
-		    messages.add(msg);
-			if (messages.size() > LAST_MESSAGES_COUNT) {
+			while (messages.size() >= CAPACITY) {
 				messages.remove(0);
 			}
+		    messages.add(msg);
 		} finally {
 			lock.unlock();
 		}
 		sessions.stream()
-			.forEach(s -> {
-				s.send(msg);
-				s.flush();
-			});
+			.forEach( s -> s.send(msg) );
 	}
 
 	public void notifyMessage(String str) {
 		sessions.stream()
 			.forEach(s -> {
 				s.println(str);
-				s.flush();
 			});		
 	}
 }
