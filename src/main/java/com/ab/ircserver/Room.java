@@ -41,18 +41,6 @@ public class Room {
 		return sessions.stream().map(s -> s.user().name()).collect(Collectors.toList());
 	}
 
-	public void add(Message msg) {
-		lock.lock();
-		try {
-		    messages.add(msg);
-			if (messages.size() > LAST_MESSAGES_COUNT) {
-				messages.remove(0);
-			}
-		} finally {
-			lock.unlock();
-		}
-	}
-
 	public List<Message> lastMessages() {
 		List<Message> result = new ArrayList<>();
 		lock.lock();
@@ -65,11 +53,27 @@ public class Room {
 	}
 
 	public void send(Message msg) {
+		lock.lock();
+		try {
+		    messages.add(msg);
+			if (messages.size() > LAST_MESSAGES_COUNT) {
+				messages.remove(0);
+			}
+		} finally {
+			lock.unlock();
+		}
 		sessions.stream()
-			.filter(s -> !s.user().name().equals(msg.from().name()))
 			.forEach(s -> {
 				s.send(msg);
 				s.flush();
 			});
+	}
+
+	public void notifyMessage(String str) {
+		sessions.stream()
+			.forEach(s -> {
+				s.println(str);
+				s.flush();
+			});		
 	}
 }

@@ -14,8 +14,8 @@ public class Session {
 	private static RoomRegister roomRegister = new RoomRegister();
 
 	private User user = User.ANONIMOUS;
-	private final Channel channel;
 	private Room room = Room.UNDEFINED;
+	private final Channel channel;
 
 	private Session(Channel channel) {
 		Objects.requireNonNull(channel);
@@ -46,8 +46,9 @@ public class Session {
 		Room newRoom = roomRegister.findOrCreate(roomName);
 		if (newRoom.addSession(this)) {
 			room.removeSession(this);
+			room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.getName() + "'");
 			room = newRoom;
-			channel.write("You are in room " + newRoom.getName() + "\r\n");
+			room.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.getName() + "'");
 			List<Message> lastMessages = room.lastMessages();
             lastMessages.forEach(this::send);
             flush();
@@ -58,13 +59,13 @@ public class Session {
 
 	public void leave() {
 		room.removeSession(this);
+		room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.getName() + "'");
 		room = Room.UNDEFINED;
 		ChannelFuture future = channel.writeAndFlush("Have a good day!\r\n");
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
 
 	public void send(Message msg) {
-		room.add(msg);
 		channel.write(msg.from().name() + ": " + msg.text() + "\r\n");
 	}
 	

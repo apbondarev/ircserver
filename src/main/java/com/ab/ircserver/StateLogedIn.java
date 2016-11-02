@@ -22,13 +22,13 @@ public class StateLogedIn implements ChatState {
 
 	@Override
 	public ChatState printUsers(Session session) {
-		session.println("Start with: /login name password");
+		session.println("Join a channel: /join channel");
 		return this;
 	}
 
 	@Override
 	public ChatState sendMessage(Session session, Message msg) {
-		session.println("Start with: /login name password");
+		session.println("Join a channel: /join channel");
 		return this;
 	}
 
