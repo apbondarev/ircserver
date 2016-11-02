@@ -46,9 +46,9 @@ public class Session {
 		Room newRoom = roomRegister.findOrCreate(roomName);
 		if (newRoom.addSession(this)) {
 			room.removeSession(this);
-			room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.getName() + "'");
+			room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.name() + "'");
 			room = newRoom;
-			room.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.getName() + "'");
+			room.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
 			List<Message> lastMessages = room.lastMessages();
             lastMessages.forEach(this::send);
             flush();
@@ -59,7 +59,7 @@ public class Session {
 
 	public void leave() {
 		room.removeSession(this);
-		room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.getName() + "'");
+		room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.name() + "'");
 		room = Room.UNDEFINED;
 		ChannelFuture future = channel.writeAndFlush("Have a good day!\r\n");
 		future.addListener(ChannelFutureListener.CLOSE);

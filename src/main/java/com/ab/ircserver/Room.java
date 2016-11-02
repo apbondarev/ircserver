@@ -25,7 +25,7 @@ public class Room {
 		this.name = name;
 	}
 
-	public String getName() {
+	public String name() {
 		return name;
 	}
 

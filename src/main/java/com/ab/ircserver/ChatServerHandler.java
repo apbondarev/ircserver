@@ -11,7 +11,7 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ChatCommand> 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		session = Session.anonimous(ctx.channel());
-		state = StateInitial.INSTANCE;
+		state = ChatState.INITIAL;
 		session.println("You are connected to IRC server.");
 	}
 
