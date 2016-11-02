@@ -20,8 +20,8 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 
 	public static final Pattern SPACE = Pattern.compile("(\\w+)\\s*(.*)");
 
-	private UserRegister userRegister = new UserRegister();
-	private RoomRegister roomRegister = new RoomRegister();
+	private static UserRegister userRegister = new UserRegister();
+	private static RoomRegister roomRegister = new RoomRegister();
 	private Session session;
 
 	@Override
