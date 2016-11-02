@@ -44,10 +44,10 @@ public class Room {
 	public void add(Message msg) {
 		lock.lock();
 		try {
+		    messages.add(msg);
 			if (messages.size() > LAST_MESSAGES_COUNT) {
 				messages.remove(0);
 			}
-			messages.add(msg);
 		} finally {
 			lock.unlock();
 		}

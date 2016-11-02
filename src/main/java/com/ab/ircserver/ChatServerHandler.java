@@ -54,8 +54,7 @@ public class ChatServerHandler extends ChannelInboundHandlerAdapter {
 
 			try {
 				User user = userRegister.login(name, password);
-				session = new Session(user, ctx.channel());
-				session.printWelcome();
+				session.auth(user);
 			} catch (WrongPasswordException e) {
 				session.println("Wrong password.");
 				return;

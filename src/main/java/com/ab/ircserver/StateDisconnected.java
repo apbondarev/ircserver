@@ -2,32 +2,34 @@ package com.ab.ircserver;
 
 public class StateDisconnected implements ChatState {
 	
-	public StateDisconnected() {
-		//
-	}
+    public static final ChatState INSTANCE = new StateDisconnected();
+    
+    private StateDisconnected() {
+        // Not used
+    }
 
 	@Override
-	public ChatState login(String name, byte[] password) {
+	public ChatState login(Session session, String name, byte[] password) {
 		throw new IrcServerException("Client disconnected");
 	}
 
 	@Override
-	public ChatState join(String roomName) {
+	public ChatState join(Session session, String roomName) {
 		throw new IrcServerException("Client disconnected");
 	}
 
 	@Override
-	public ChatState leave() {
+	public ChatState leave(Session session) {
 		throw new IrcServerException("Client disconnected");
 	}
 
 	@Override
-	public ChatState printUsers() {
+	public ChatState printUsers(Session session) {
 		throw new IrcServerException("Client disconnected");
 	}
 
 	@Override
-	public ChatState sendMessage(Message msg) {
+	public ChatState sendMessage(Session session, Message msg) {
 		throw new IrcServerException("Client disconnected");
 	}
 

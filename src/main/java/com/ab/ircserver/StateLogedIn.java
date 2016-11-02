@@ -7,44 +7,50 @@ import io.netty.channel.ChannelFutureListener;
 
 public class StateLogedIn implements ChatState {
 	
-	private final Session session;
+    public static final ChatState INSTANCE = new StateLogedIn();
+            
 	private RoomRegister roomRegister = null;
 
-	public StateLogedIn(Session session) {
-		this.session = session;
+	private StateLogedIn() {
+	    // Not used
 	}
-
+	
 	@Override
-	public ChatState login(String name, byte[] password) {
+	public ChatState login(Session session, String name, byte[] password) {
 		session.println("You've logged in already as user '" + session.user().name() + "'");
 		return this;
 	}
 
 	@Override
-	public ChatState join(String roomName) {
+	public ChatState join(Session session, String roomName) {
 		Room room = roomRegister.findOrCreate(roomName);
-		session.join(room);
-		List<Message> lastMessages = room.lastMessages();
-		lastMessages.forEach(session::send);
-		session.flush();
-		return new StateJoined(session);
+		boolean ok = session.join(room);
+        if (ok) {
+            List<Message> lastMessages = room.lastMessages();
+            lastMessages.forEach(session::send);
+            session.flush();
+            return StateJoined.INSTANCE;
+        } else {
+            session.println("Max 10 active clients per channel is allowed.");
+            return this;
+        }
 	}
 
 	@Override
-	public ChatState leave() {
+	public ChatState leave(Session session) {
 		ChannelFuture future = session.leave();
 		future.addListener(ChannelFutureListener.CLOSE);
-		return new StateDisconnected();
+		return StateDisconnected.INSTANCE;
 	}
 
 	@Override
-	public ChatState printUsers() {
+	public ChatState printUsers(Session session) {
 		session.println("Start with: /login name password");
 		return this;
 	}
 
 	@Override
-	public ChatState sendMessage(Message msg) {
+	public ChatState sendMessage(Session session, Message msg) {
 		session.println("Start with: /login name password");
 		return this;
 	}

@@ -5,20 +5,20 @@ import io.netty.channel.ChannelFutureListener;
 
 public class StateInitial implements ChatState {
 	
-	private final Session session;
-	private UserRegister userRegister = null;
-
-	public StateInitial(Session session) {
-		this.session = session;
+    public static final ChatState INSTANCE = new StateInitial();
+    
+    private UserRegister userRegister = null;
+	
+	private StateInitial() {
+	    // Not used
 	}
 
 	@Override
-	public ChatState login(String name, byte[] password) {
+	public ChatState login(Session session, String name, byte[] password) {
 		try {
 			User user = userRegister.login(name, password);
-			Session newSession = new Session(user, session.channel());
-			newSession.printWelcome();
-			return new StateLogedIn(newSession);
+			session.auth(user);
+			return StateLogedIn.INSTANCE;
 		} catch (WrongPasswordException e) {
 			session.println("Wrong password.");
 			return this;
@@ -26,26 +26,26 @@ public class StateInitial implements ChatState {
 	}
 
 	@Override
-	public ChatState join(String roomName) {
+	public ChatState join(Session session, String roomName) {
 		session.println("Start with: /login name password");
 		return this;
 	}
 
 	@Override
-	public ChatState leave() {
+	public ChatState leave(Session session) {
 		ChannelFuture future = session.leave();
 		future.addListener(ChannelFutureListener.CLOSE);
-		return new StateDisconnected();
+		return StateDisconnected.INSTANCE;
 	}
 
 	@Override
-	public ChatState printUsers() {
+	public ChatState printUsers(Session session) {
 		session.println("Start with: /login name password");
 		return this;
 	}
 
 	@Override
-	public ChatState sendMessage(Message msg) {
+	public ChatState sendMessage(Session session, Message msg) {
 		session.println("Start with: /login name password");
 		return this;
 	}
