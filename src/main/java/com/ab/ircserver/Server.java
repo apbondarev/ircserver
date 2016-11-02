@@ -47,6 +47,7 @@ public class Server {
                             ChannelPipeline pipeline = ch.pipeline();
                             pipeline.addLast("string delimiter", new DelimiterBasedFrameDecoder(255, Delimiters.lineDelimiter()));
                             pipeline.addLast("string decoder", new StringDecoder(CharsetUtil.UTF_8));
+                            pipeline.addLast("command decoder", new CommandDecoder());
                             pipeline.addLast("string encoder", new StringEncoder(CharsetUtil.UTF_8));
                             pipeline.addLast("command handler", new ChatServerHandler());
                         }

@@ -1,17 +1,13 @@
 package com.ab.ircserver;
 
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-
 public interface ChatState {
 
-	ChatState login(Session session, String name, byte[] password);
+	ChatState login(Session session, CommandLogin cmd);
 	
-	ChatState join(Session session, String roomName);
+	ChatState join(Session session, CommandJoin cmd);
 	
 	default ChatState leave(Session session) {
-		ChannelFuture future = session.leave();
-		future.addListener(ChannelFutureListener.CLOSE);
+		session.leave();
 		return StateDisconnected.INSTANCE;
 	}
 

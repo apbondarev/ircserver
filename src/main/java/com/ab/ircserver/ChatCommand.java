@@ -1,9 +1,12 @@
 package com.ab.ircserver;
 
 /**
- * Market interface for chat commands.
+ * Interface for chat commands.
  * @author albondarev
  */
+@FunctionalInterface
 public interface ChatCommand {
+
+	ChatState exec(Session session, ChatState state);
 
 }

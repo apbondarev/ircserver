@@ -9,28 +9,28 @@ public class StateDisconnected implements ChatState {
     }
 
 	@Override
-	public ChatState login(Session session, String name, byte[] password) {
-		throw new IrcServerException("Client disconnected");
+	public ChatState login(Session session, CommandLogin cmd) {
+		throw new ChatServerException("Client disconnected");
 	}
 
 	@Override
-	public ChatState join(Session session, String roomName) {
-		throw new IrcServerException("Client disconnected");
+	public ChatState join(Session session, CommandJoin cmd) {
+		throw new ChatServerException("Client disconnected");
 	}
 
 	@Override
 	public ChatState leave(Session session) {
-		throw new IrcServerException("Client disconnected");
+		throw new ChatServerException("Client disconnected");
 	}
 
 	@Override
 	public ChatState printUsers(Session session) {
-		throw new IrcServerException("Client disconnected");
+		throw new ChatServerException("Client disconnected");
 	}
 
 	@Override
 	public ChatState sendMessage(Session session, Message msg) {
-		throw new IrcServerException("Client disconnected");
+		throw new ChatServerException("Client disconnected");
 	}
 
 }

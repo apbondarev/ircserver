@@ -26,7 +26,7 @@ public class User {
             md = MessageDigest.getInstance("MD5");
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
-            throw new IrcServerException("MD5", e);
+            throw new ChatServerException("MD5", e);
         }
         byte[] saltBytes = SALT.getBytes(StandardCharsets.US_ASCII);
         byte[] input = Arrays.copyOf(password, password.length + saltBytes.length);

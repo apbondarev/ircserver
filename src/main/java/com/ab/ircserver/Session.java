@@ -1,11 +1,17 @@
 package com.ab.ircserver;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 
 public class Session {
+
+	private static UserRegister userRegister = new UserRegister();
+	private static RoomRegister roomRegister = new RoomRegister();
 
 	private User user = User.ANONIMOUS;
 	private final Channel channel;
@@ -24,13 +30,11 @@ public class Session {
 		return user;
 	}
 	
-	public void auth(User user) {
-	    this.user = user;
+	public void login(String userName, byte[] password) {
+		User userNew = userRegister.login(userName, password);
+		this.user = userNew;
+	    Arrays.fill(password, (byte) 0);
 	    channel.writeAndFlush("Welcome " + user.name() + "!\r\n");
-	}
-	
-	public Channel channel() {
-		return channel;
 	}
 	
 	public void printUsers() {
@@ -38,21 +42,25 @@ public class Session {
 		channel.flush();
 	}
 
-	public boolean join(Room newRoom) {
+	public void join(String roomName) {
+		Room newRoom = roomRegister.findOrCreate(roomName);
 		if (newRoom.addSession(this)) {
 			room.removeSession(this);
 			room = newRoom;
 			channel.write("You are in room " + newRoom.getName() + "\r\n");
-			return true;
+			List<Message> lastMessages = room.lastMessages();
+            lastMessages.forEach(this::send);
+            flush();
 		} else {
-			return false;
+			throw new MaxActiveClientsException("Max 10 active clients per channel is allowed.");
 		}
 	}
 
-	public ChannelFuture leave() {
+	public void leave() {
 		room.removeSession(this);
 		room = Room.UNDEFINED;
-		return channel.writeAndFlush("Have a good day!\r\n");
+		ChannelFuture future = channel.writeAndFlush("Have a good day!\r\n");
+		future.addListener(ChannelFutureListener.CLOSE);
 	}
 
 	public void send(Message msg) {
@@ -66,14 +74,6 @@ public class Session {
 
 	public void sendInRoom(Message msg) {
 		room.send(msg);
-	}
-
-	public boolean isAnonimous() {
-		return user == User.ANONIMOUS;
-	}
-
-	public boolean inRoom() {
-		return room != Room.UNDEFINED;
 	}
 
 	public void println(String string) {

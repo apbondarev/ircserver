@@ -4,26 +4,18 @@ public class StateInitial implements ChatState {
 	
     public static final ChatState INSTANCE = new StateInitial();
     
-    private UserRegister userRegister = null;
-	
 	private StateInitial() {
 	    // Not used
 	}
 
 	@Override
-	public ChatState login(Session session, String name, byte[] password) {
-		try {
-			User user = userRegister.login(name, password);
-			session.auth(user);
-			return StateLogedIn.INSTANCE;
-		} catch (WrongPasswordException e) {
-			session.println("Wrong password.");
-			return this;
-		}
+	public ChatState login(Session session, CommandLogin cmd) {
+		session.login(cmd.userName(), cmd.password());
+		return StateLogedIn.INSTANCE;
 	}
 
 	@Override
-	public ChatState join(Session session, String roomName) {
+	public ChatState join(Session session, CommandJoin cmd) {
 		session.println("Start with: /login name password");
 		return this;
 	}

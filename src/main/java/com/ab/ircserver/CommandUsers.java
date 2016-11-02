@@ -1,10 +1,10 @@
 package com.ab.ircserver;
 
-class CommandLeave implements ChatCommand {
+class CommandUsers implements ChatCommand {
 
 	@Override
 	public ChatState exec(Session session, ChatState state) {
-		return state.leave(session);
+		return state.printUsers(session);
 	}
-	
+
 }

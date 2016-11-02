@@ -19,13 +19,11 @@ public class RoomTest {
 
     @Test
     public void testUsers() {
-        User user1 = new User("user1", "password1".getBytes());
         Session s1 = Session.anonimous(channel1);
-        s1.auth(user1);
+        s1.login("user1", "password1".getBytes());
         
-        User user2 = new User("user2", "password2".getBytes());
         Session s2 = Session.anonimous(channel2);
-        s2.auth(user2);
+        s2.login("user2", "password2".getBytes());
         
         Room room = new Room("room1");
         assertEquals(0, room.users().size());

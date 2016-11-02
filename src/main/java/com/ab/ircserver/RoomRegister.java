@@ -9,7 +9,7 @@ public class RoomRegister {
     
     public Room findOrCreate(String roomName) {
         if (roomName == null || roomName.length() == 0) {
-            throw new IrcServerException("Incorrect channel: " + Objects.toString(roomName));
+            throw new ChatServerException("Incorrect channel: " + Objects.toString(roomName));
         }
         return rooms.computeIfAbsent(roomName, Room::new);
     }
