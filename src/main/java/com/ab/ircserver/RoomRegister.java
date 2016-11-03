@@ -8,8 +8,9 @@ public class RoomRegister {
     private ConcurrentHashMap<String, Room> rooms = new ConcurrentHashMap<>();
     
     public Room findOrCreate(String roomName) {
-        if (roomName == null || roomName.length() == 0) {
-            throw new ChatServerException("Incorrect channel: " + Objects.toString(roomName));
+    	Objects.requireNonNull(roomName);
+        if (roomName.length() == 0) {
+            return Room.UNDEFINED;
         }
         return rooms.computeIfAbsent(roomName, Room::new);
     }

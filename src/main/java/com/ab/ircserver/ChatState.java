@@ -5,8 +5,11 @@ public enum ChatState {
 	INITIAL {
 		@Override
 		public ChatState login(Session session, CommandLogin cmd) {
-			session.login(cmd.userName(), cmd.password());
-			return LOGGED_IN;
+			if (session.login(cmd.userName(), cmd.password())) {
+				return LOGGED_IN;
+			} else {
+				return this;
+			}
 		}
 
 		@Override
@@ -37,8 +40,11 @@ public enum ChatState {
 
 		@Override
 		public ChatState join(Session session, CommandJoin cmd) {
-			session.join(cmd.roomName());
-	        return JOINED;
+			if (session.join(cmd.roomName())) {
+				return JOINED;
+			} else {
+				return this;
+			}
 		}
 
 		@Override
@@ -64,7 +70,7 @@ public enum ChatState {
 
 		@Override
 		public ChatState join(Session session, CommandJoin cmd) {
-			session.join(cmd.roomName());
+			session.join(cmd.roomName()); 
 			return this;
 		}
 
@@ -81,34 +87,14 @@ public enum ChatState {
 		}
 	},
 	
-	DISCONNECTED {
-		@Override
-		public ChatState login(Session session, CommandLogin cmd) {
-			throw new ChatServerException("Client disconnected");
-		}
-
-		@Override
-		public ChatState join(Session session, CommandJoin cmd) {
-			throw new ChatServerException("Client disconnected");
-		}
-
-		@Override
-		public ChatState printUsers(Session session) {
-			throw new ChatServerException("Client disconnected");
-		}
-
-		@Override
-		public ChatState sendMessage(Session session, Message msg) {
-			throw new ChatServerException("Client disconnected");
-		}
-	};
+	DISCONNECTED;
 	
 	ChatState login(Session session, CommandLogin cmd) {
-		throw new ChatServerException("Wrong command");
+		return this;
 	}
 	
 	ChatState join(Session session, CommandJoin cmd) {
-		throw new ChatServerException("Wrong command");
+		return this;
 	}
 	
 	ChatState leave(Session session) {
@@ -117,11 +103,11 @@ public enum ChatState {
 	}
 
 	ChatState printUsers(Session session) {
-		throw new ChatServerException("Wrong command");
+		return this;
 	}
 	
 	ChatState sendMessage(Session session, Message msg) {
-		throw new ChatServerException("Wrong command");
+		return this;
 	}
 	
 }

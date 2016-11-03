@@ -31,11 +31,17 @@ public class Session {
 		return user;
 	}
 	
-	public void login(String userName, byte[] password) {
+	public boolean login(String userName, byte[] password) {
 		User userNew = userRegister.login(userName, password);
+		if (userNew == User.ANONIMOUS) {
+			println("Wrong password");
+			return false;
+		}
+		
 		this.user = userNew;
 	    Arrays.fill(password, (byte) 0);
-	    channel.writeAndFlush("Welcome " + user.name() + "!\r\n");
+	    println("Welcome " + user.name() + "!");
+	    return true;
 	}
 	
 	public void printUsers() {
@@ -43,17 +49,22 @@ public class Session {
 		channel.flush();
 	}
 
-	public void join(String roomName) {
+	public boolean join(String roomName) {
 		Room newRoom = roomRegister.findOrCreate(roomName);
-		if (newRoom.addSession(this)) {
+		if (newRoom == Room.UNDEFINED) {
+			println("Wrong channel '" + roomName + "'.");
+			return false;
+		} else if (newRoom.addSession(this)) {
 			room.removeSession(this);
 			room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.name() + "'");
 			room = newRoom;
 			room.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
 			List<Message> lastMessages = room.lastMessages();
 			send(lastMessages);
+			return true;
 		} else {
-			throw new MaxActiveClientsException("Max 10 active clients per channel is allowed.");
+			println("Max " + Room.CAPACITY + " active clients per channel is allowed.");
+			return false;
 		}
 	}
 

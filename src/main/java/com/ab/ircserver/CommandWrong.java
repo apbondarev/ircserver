@@ -2,7 +2,7 @@ package com.ab.ircserver;
 
 class CommandWrong implements ChatCommand {
 	
-	private String message;
+	private final String message;
 	
 	public CommandWrong(String message) {
 		super();
@@ -11,7 +11,8 @@ class CommandWrong implements ChatCommand {
 
 	@Override
 	public ChatState exec(Session session, ChatState state) {
-		throw new WrongCommandException(message);
+		session.println(message);
+		return state;
 	}
 
 }

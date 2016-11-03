@@ -17,7 +17,7 @@ public class UserRegister {
         
         User user = users.computeIfAbsent(name, s -> new User(name, password));
         if (!user.isCorrectPassword(name, password)) { 
-            throw new WrongPasswordException();
+            return User.ANONIMOUS;
         }
         return user;
     }
