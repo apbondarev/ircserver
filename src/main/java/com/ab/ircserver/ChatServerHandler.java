@@ -18,6 +18,7 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ChatCommand> 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, ChatCommand cmd) throws Exception {
 		state = cmd.exec(session, state);
+		ctx.fireChannelRead(cmd);
 	}
 
 	@Override

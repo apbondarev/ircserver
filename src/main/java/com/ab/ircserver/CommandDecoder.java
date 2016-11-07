@@ -28,15 +28,15 @@ public class CommandDecoder extends MessageToMessageDecoder<String> {
 				byte[] password = matcher.group(2).getBytes(StandardCharsets.UTF_8);
 				out.add(new CommandLogin(name, password));
 			} else {
-				out.add(new CommandWrong("Wrong command. Expected: /login name password"));
+				out.add(CommandWrong.LOGIN);
 			}
 		} else if (commandStr.startsWith(JOIN)) {
 			String roomName = commandStr.substring(JOIN.length()).trim();
 			out.add(new CommandJoin(roomName));
 		} else if (commandStr.startsWith(LEAVE)) {
-			out.add(new CommandLeave());
+			out.add(CommandLeave.INSTANCE);
 		} else if (commandStr.startsWith(USERS)) {
-			out.add(new CommandUsers());
+			out.add(CommandUsers.INSTANCE);
 		} else {
 			out.add(new CommandMessage(commandStr));
 		}
