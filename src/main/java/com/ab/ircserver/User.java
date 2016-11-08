@@ -35,9 +35,9 @@ public class User {
         return md.digest();
     }
 
-    public boolean isCorrectPassword(String aName, byte[] aPassword) {
+    public boolean isCorrectPassword(byte[] aPassword) {
         byte[] hash = md5(aPassword);
-        return name.equals(aName) && Arrays.equals(passwordMd5, hash);
+        return Arrays.equals(passwordMd5, hash);
     }
 
     public String name() {

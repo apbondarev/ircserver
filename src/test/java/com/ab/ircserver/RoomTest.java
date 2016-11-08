@@ -20,10 +20,10 @@ public class RoomTest {
     @Test
     public void testUsers() {
         Session s1 = Session.anonimous(channel1);
-        s1.login("user1", "password1".getBytes());
+        s1.login(new User("user1", "password1".getBytes()), "password1".getBytes());
         
         Session s2 = Session.anonimous(channel2);
-        s2.login("user2", "password2".getBytes());
+        s2.login(new User("user2", "password2".getBytes()), "password2".getBytes());
         
         Room room = new Room("room1");
         assertEquals(0, room.users().size());

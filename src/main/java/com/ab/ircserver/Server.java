@@ -14,6 +14,8 @@ import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.util.CharsetUtil;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 
 public class Server {
 
@@ -36,7 +38,8 @@ public class Server {
 
     private void run() {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup workerGroup = new NioEventLoopGroup(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
+        EventExecutorGroup executorGroup = new DefaultEventExecutorGroup(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
         try {
             ServerBootstrap b = new ServerBootstrap()
                     .group(bossGroup, workerGroup)
@@ -50,6 +53,7 @@ public class Server {
                             pipeline.addLast("command decoder", new CommandDecoder());
                             pipeline.addLast("string encoder", new StringEncoder(CharsetUtil.UTF_8));
                             pipeline.addLast("command handler", new ChatServerHandler());
+                            pipeline.addLast(executorGroup, "database handler", new DatabaseHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)

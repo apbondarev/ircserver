@@ -1,6 +1,5 @@
 package com.ab.ircserver;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -10,9 +9,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 
 public class Session {
-
-	private static UserRegister userRegister = new UserRegister();
-	private static RoomRegister roomRegister = new RoomRegister();
 
 	private User user = User.ANONIMOUS;
 	private Room room = Room.UNDEFINED;
@@ -31,15 +27,13 @@ public class Session {
 		return user;
 	}
 	
-	public boolean login(String userName, byte[] password) {
-		User userNew = userRegister.login(userName, password);
-		if (userNew == User.ANONIMOUS) {
+	public boolean login(User user, byte[] password) {
+		if (!user.isCorrectPassword(password)) {
 			println("Wrong password");
 			return false;
 		}
 		
-		this.user = userNew;
-	    Arrays.fill(password, (byte) 0);
+		this.user = user;
 	    println("Welcome " + user.name() + "!");
 	    return true;
 	}
@@ -49,10 +43,9 @@ public class Session {
 		channel.flush();
 	}
 
-	public boolean join(String roomName) {
-		Room newRoom = roomRegister.findOrCreate(roomName);
+	public boolean join(Room newRoom) {
 		if (newRoom == Room.UNDEFINED) {
-			println("Wrong channel '" + roomName + "'.");
+			println("Wrong channel '" + newRoom.name() + "'.");
 			return false;
 		} else if (newRoom.addSession(this)) {
 			room.removeSession(this);

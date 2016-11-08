@@ -5,11 +5,7 @@ public enum ChatState {
 	INITIAL {
 		@Override
 		public ChatState login(Session session, CommandLogin cmd) {
-			if (session.login(cmd.userName(), cmd.password())) {
-				return LOGGED_IN;
-			} else {
-				return this;
-			}
+			return this;
 		}
 
 		@Override
@@ -40,11 +36,7 @@ public enum ChatState {
 
 		@Override
 		public ChatState join(Session session, CommandJoin cmd) {
-			if (session.join(cmd.roomName())) {
-				return JOINED;
-			} else {
-				return this;
-			}
+			return this;
 		}
 
 		@Override
@@ -70,7 +62,6 @@ public enum ChatState {
 
 		@Override
 		public ChatState join(Session session, CommandJoin cmd) {
-			session.join(cmd.roomName()); 
 			return this;
 		}
 

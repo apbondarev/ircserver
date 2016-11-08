@@ -17,9 +17,8 @@ public class UserTest {
         byte[] passwordCopy = Arrays.copyOf(password, password.length);
         User user = new User("username", password);
         
-        assertTrue("Password is correct", user.isCorrectPassword(new String("username"), passwordCopy));
-        assertFalse("User name is wrong", user.isCorrectPassword(new String("usernam1"), passwordCopy));
-        assertFalse("Password is wrong", user.isCorrectPassword(new String("username"), passwordWrong));
+        assertTrue("Password is correct", user.isCorrectPassword(passwordCopy));
+        assertFalse("Password is wrong", user.isCorrectPassword(passwordWrong));
     }
 
 }
