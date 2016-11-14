@@ -7,24 +7,40 @@ import java.util.Objects;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.util.Attribute;
+import io.netty.util.AttributeKey;
 
 public class Session {
+
+    static final AttributeKey<Session> KEY_SESSION = AttributeKey.valueOf("session");
 
 	private User user = User.ANONIMOUS;
 	private Room room = Room.UNDEFINED;
 	private final Channel channel;
+	private ChatState state = ChatState.INITIAL;
 
 	private Session(Channel channel) {
 		Objects.requireNonNull(channel);
 		this.channel = channel;
 	}
 	
-	public static Session anonimous(Channel channel) {
-		return new Session(channel);
+	public static void newSession(Channel channel) {
+	    Session session = new Session(channel);
+	    Attribute<Session> attrSession = channel.attr(KEY_SESSION);
+	    attrSession.set(session);
+	    session.println("You are connected to IRC server.");
 	}
-
-	public User user() {
-		return user;
+	
+	public static Session current(Channel channel) {
+	    return channel.attr(KEY_SESSION).get();
+	}
+	
+	public void exec(ChatCommand cmd) {
+	    cmd.exec(this);
+	}
+	
+	public String username() {
+	    return user.name();
 	}
 	
 	public boolean login(User user, byte[] password) {
@@ -34,6 +50,7 @@ public class Session {
 		}
 		
 		this.user = user;
+	    this.state = ChatState.LOGGED_IN;
 	    println("Welcome " + user.name() + "!");
 	    return true;
 	}
@@ -54,6 +71,7 @@ public class Session {
 			room.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
 			List<Message> lastMessages = room.lastMessages();
 			send(lastMessages);
+			state = ChatState.JOINED;
 			return true;
 		} else {
 			println("Max " + Room.CAPACITY + " active clients per channel is allowed.");
@@ -65,12 +83,13 @@ public class Session {
 		room.removeSession(this);
 		room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.name() + "'");
 		room = Room.UNDEFINED;
+		state = ChatState.DISCONNECTED;
 		ChannelFuture future = channel.writeAndFlush("Have a good day!\r\n");
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
 
 	private void sendNoFlush(Message msg) {
-		channel.write(msg.from().name() + ": " + msg.text() + "\r\n");
+		channel.write(msg.username() + ": " + msg.text() + "\r\n");
 	}
 	
 	public void send(Message msg) {

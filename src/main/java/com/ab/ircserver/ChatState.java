@@ -4,101 +4,91 @@ public enum ChatState {
 
 	INITIAL {
 		@Override
-		public ChatState login(Session session, CommandLogin cmd) {
-			return this;
+		public void login(Session session, CommandLogin cmd) {
+		    cmd.exec(session);
 		}
 
 		@Override
-		public ChatState join(Session session, CommandJoin cmd) {
+		public void join(Session session, CommandJoin cmd) {
 			session.println("Start with: /login name password");
-			return this;
 		}
 
 		@Override
-		public ChatState printUsers(Session session) {
+		public void printUsers(Session session) {
 			session.println("Start with: /login name password");
-			return this;
 		}
 
 		@Override
-		public ChatState sendMessage(Session session, Message msg) {
+		public void sendMessage(Session session, Message msg) {
 			session.println("Start with: /login name password");
-			return this;
 		}
 	},
 	
 	LOGGED_IN {
 		@Override
-		public ChatState login(Session session, CommandLogin cmd) {
-			session.println("You've logged in already as user '" + session.user().name() + "'");
-			return this;
+		public void login(Session session, CommandLogin cmd) {
+			session.println("You've logged in already as user '" + session.username() + "'");
 		}
 
 		@Override
-		public ChatState join(Session session, CommandJoin cmd) {
-			return this;
+		public void join(Session session, CommandJoin cmd) {
+			cmd.exec(session);
 		}
 
 		@Override
-		public ChatState printUsers(Session session) {
+		public void printUsers(Session session) {
 			session.println("Join a channel: /join channel");
-			return this;
 		}
 
 		@Override
-		public ChatState sendMessage(Session session, Message msg) {
+		public void sendMessage(Session session, Message msg) {
 			session.println("Join a channel: /join channel");
-			return this;
 		}
 	},
 	
 
 	JOINED {
 		@Override
-		public ChatState login(Session session, CommandLogin cmd) {
-			session.println("You've logged in already as user '" + session.user().name() + "'");
-			return this;
+		public void login(Session session, CommandLogin cmd) {
+			session.println("You've logged in already as user '" + session.username() + "'");
 		}
 
 		@Override
-		public ChatState join(Session session, CommandJoin cmd) {
-			return this;
+		public void join(Session session, CommandJoin cmd) {
+			cmd.exec(session);
 		}
 
 		@Override
-		public ChatState printUsers(Session session) {
+		public void printUsers(Session session) {
 			session.printUsers();
-			return this;
 		}
 
 		@Override
-		public ChatState sendMessage(Session session, Message msg) {
+		public void sendMessage(Session session, Message msg) {
 			session.sendInRoom(msg);
-			return this;
 		}
 	},
 	
 	DISCONNECTED;
 	
-	ChatState login(Session session, CommandLogin cmd) {
-		return this;
+	void login(Session session, CommandLogin cmd) {
+		// do nothing
 	}
 	
-	ChatState join(Session session, CommandJoin cmd) {
-		return this;
+	void join(Session session, CommandJoin cmd) {
+		// do nothing
 	}
 	
-	ChatState leave(Session session) {
+	void leave(Session session) {
 		session.leave();
-		return ChatState.DISCONNECTED;
 	}
 
-	ChatState printUsers(Session session) {
-		return this;
+	void printUsers(Session session) {
+		// do nothing
 	}
 	
-	ChatState sendMessage(Session session, Message msg) {
-		return this;
+	void sendMessage(Session session, Message msg) {
+		// do nothing
 	}
 	
 }

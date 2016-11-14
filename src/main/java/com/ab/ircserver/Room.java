@@ -36,7 +36,7 @@ public class Room {
 	}
 
 	public List<String> users() {
-		return sessions.stream().map(s -> s.user().name()).collect(Collectors.toList());
+		return sessions.stream().map(s -> s.username()).collect(Collectors.toList());
 	}
 
 	public List<Message> lastMessages() {

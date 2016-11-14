@@ -4,19 +4,19 @@ import java.time.LocalDateTime;
 
 public class Message {
 
-	private final User from;
+	private final String username;
 	private final LocalDateTime when;
 	private final String text;
 
-	public Message(User from, String text) {
+	public Message(String username, String text) {
 		super();
-		this.from = from;
+		this.username = username;
 		this.when = LocalDateTime.now();
 		this.text = text;
 	}
 
-	public User from() {
-		return from;
+	public String username() {
+		return username;
 	}
 
 	public LocalDateTime when() {
