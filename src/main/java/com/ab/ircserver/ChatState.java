@@ -1,6 +1,7 @@
 package com.ab.ircserver;
 
 import java.util.List;
+import java.util.Optional;
 
 interface ChatState {
 	
@@ -13,6 +14,8 @@ interface ChatState {
 	void sendMessage(Session session, CommandMessage cmd);
 	
 	void leave(Session session);
+	
+	Optional<User> user();
 }
 
 class Initial implements ChatState {
@@ -48,6 +51,11 @@ class Initial implements ChatState {
 		session.setState(new Disconnected());
 		session.close("Have a good day!\r\n");
 	}
+
+    @Override
+    public Optional<User> user() {
+        return Optional.empty();
+    }
 }
 	
 class LoggedIn implements ChatState {
@@ -92,6 +100,11 @@ class LoggedIn implements ChatState {
 		session.setState(new Disconnected());
 		session.close("Have a good day!\r\n");
 	}
+	
+	@Override
+    public Optional<User> user() {
+        return Optional.of(user);
+    }
 }
 	
 class Joined implements ChatState {
@@ -147,6 +160,11 @@ class Joined implements ChatState {
 		session.setState(new Disconnected());
 		session.close("Have a good day!\r\n");
 	}
+	
+	@Override
+    public Optional<User> user() {
+        return Optional.of(user);
+    }
 }
 	
 class Disconnected implements ChatState {
@@ -169,5 +187,10 @@ class Disconnected implements ChatState {
 	
 	public void sendMessage(Session session, CommandMessage cmd) {
 		// do nothing
-	}	
+	}
+	
+	@Override
+    public Optional<User> user() {
+        return Optional.empty();
+    }
 }

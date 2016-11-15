@@ -1,6 +1,7 @@
 package com.ab.ircserver;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import io.netty.channel.Channel;
@@ -34,6 +35,11 @@ public class Session {
 	
 	public ChatState state() {
 	    return channel.attr(KEY_STATE).get();
+	}
+	
+	public Optional<String> username() {
+	    Optional<User> user = state().user();
+	    return user.map(User::name);
 	}
 	
 	public void setState(ChatState state) {

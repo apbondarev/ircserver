@@ -2,6 +2,7 @@ package com.ab.ircserver;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.Lock;
@@ -36,7 +37,11 @@ public class Room {
 	}
 
 	public List<String> users() {
-		return sessions.stream().map(s -> s.username()).collect(Collectors.toList());
+		return sessions.stream()
+		        .map(Session::username)
+		        .filter(Optional::isPresent)
+		        .map(Optional::get)
+		        .collect(Collectors.toList());
 	}
 
 	public List<Message> lastMessages() {
