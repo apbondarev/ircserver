@@ -10,15 +10,16 @@ public class DatabaseHandler extends SimpleChannelInboundHandler<ChatCommand> {
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, ChatCommand msg) throws Exception {
 		Session session = Session.current(ctx.channel());
+		ChatState state = session.state();
 		
 		if (msg instanceof CommandLogin) {
 			CommandLogin cmd = (CommandLogin) msg;
 			User user = db.findOrCreateUser(cmd.userName(), cmd.password());
-			session.login(user, cmd.password());
+			state.login(session, user, cmd);
 		} else if (msg instanceof CommandJoin) {
 			CommandJoin cmd = (CommandJoin) msg;
 			Room room = db.findOrCreateRoom(cmd.roomName());
-			session.join(room);
+			state.join(session, room);
 		}
 		ctx.fireChannelRead(msg);
 	}

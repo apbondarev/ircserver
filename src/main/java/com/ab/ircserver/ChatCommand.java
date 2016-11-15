@@ -28,7 +28,8 @@ class CommandLogin implements ChatCommand {
 
 	@Override
 	public void exec(Session session) {
-	    session.exec(this);
+	    ChatState state = session.state();
+	    state.login(session, user, this);
 	}
 }
 
@@ -45,7 +46,8 @@ class CommandJoin implements ChatCommand {
 
 	@Override
 	public void exec(Session session) {
-	    session.exec(this);
+		ChatState state = session.state();
+		state.join(session, newRoom);
 	}
 }
 
@@ -62,8 +64,8 @@ class CommandMessage implements ChatCommand {
 
 	@Override
 	public void exec(Session session) {
-		Message msg = new Message(session.username(), text);
-		session.exec(this);
+		ChatState state = session.state();
+		state.sendMessage(session, this);
 	}
 }
 
@@ -74,7 +76,8 @@ class CommandUsers implements ChatCommand {
 	
 	@Override
 	public void exec(Session session) {
-	    session.state().printUsers(session);
+		ChatState state = session.state();
+		state.printUsers(session);
 	}
 }
 
@@ -101,6 +104,7 @@ class CommandLeave implements ChatCommand {
 	
 	@Override
 	public void exec(Session session) {
-	    session.state().leave(session);
+		ChatState state = session.state();
+		state.leave(session);
 	}
 }
