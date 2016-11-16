@@ -5,7 +5,11 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 public class DatabaseHandler extends SimpleChannelInboundHandler<ChatCommand> {
 	
-	private static Database db = new InMemoryDatabase();
+	private final Database db;
+	
+	public DatabaseHandler(Database db) {
+        this.db = db;
+	}
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, ChatCommand msg) throws Exception {

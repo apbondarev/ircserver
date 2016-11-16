@@ -6,24 +6,22 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import io.netty.channel.Channel;
-
 @RunWith(MockitoJUnitRunner.class)
 public class RoomTest {
     
     @Mock
-    Channel channel1;
+    Session s1;
     
     @Mock
-    Channel channel2;
+    Session s2;
 
     @Test
     public void testUsers() {
-        Session s1 = Session.anonimous(channel1);
-        s1.login(new User("user1", "password1".getBytes()), "password1".getBytes());
-        
-        Session s2 = Session.anonimous(channel2);
-        s2.login(new User("user2", "password2".getBytes()), "password2".getBytes());
+//        Session s1 = Session.anonimous(channel1);
+//        s1.login(new User("user1", "password1".getBytes()), "password1".getBytes());
+//        
+//        Session s2 = Session.anonimous(channel2);
+//        s2.login(new User("user2", "password2".getBytes()), "password2".getBytes());
         
         Room room = new Room("room1");
         assertEquals(0, room.users().size());

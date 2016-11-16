@@ -6,7 +6,12 @@ package com.ab.ircserver;
  */
 @FunctionalInterface
 public interface ChatCommand {
-	void exec(Session session);
+    public enum Result {
+        COMPLETED,
+        IN_DATABASE
+    }
+    
+    Result exec(Session session);
 }
 
 class CommandLogin implements ChatCommand {
@@ -27,9 +32,8 @@ class CommandLogin implements ChatCommand {
 	}
 
 	@Override
-	public void exec(Session session) {
-	    ChatState state = session.state();
-	    state.login(session, user, this);
+	public Result exec(Session session) {
+	    return Result.IN_DATABASE;
 	}
 }
 
@@ -45,9 +49,8 @@ class CommandJoin implements ChatCommand {
 	}
 
 	@Override
-	public void exec(Session session) {
-		ChatState state = session.state();
-		state.join(session, newRoom);
+	public Result exec(Session session) {
+		return Result.IN_DATABASE;
 	}
 }
 
@@ -63,9 +66,10 @@ class CommandMessage implements ChatCommand {
 	}
 
 	@Override
-	public void exec(Session session) {
+	public Result exec(Session session) {
 		ChatState state = session.state();
 		state.sendMessage(session, this);
+		return Result.COMPLETED;
 	}
 }
 
@@ -75,9 +79,10 @@ class CommandUsers implements ChatCommand {
 	private CommandUsers() {}
 	
 	@Override
-	public void exec(Session session) {
+	public Result exec(Session session) {
 		ChatState state = session.state();
 		state.printUsers(session);
+		return Result.COMPLETED;
 	}
 }
 
@@ -92,8 +97,9 @@ class CommandWrong implements ChatCommand {
 	}
 
 	@Override
-	public void exec(Session session) {
+	public Result exec(Session session) {
 		session.println(message);
+		return Result.COMPLETED;
 	}
 }
 
@@ -103,8 +109,9 @@ class CommandLeave implements ChatCommand {
 	private CommandLeave() {}
 	
 	@Override
-	public void exec(Session session) {
+	public Result exec(Session session) {
 		ChatState state = session.state();
 		state.leave(session);
+		return Result.COMPLETED;
 	}
 }

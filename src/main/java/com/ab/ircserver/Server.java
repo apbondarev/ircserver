@@ -40,6 +40,7 @@ public class Server {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
         EventExecutorGroup executorGroup = new DefaultEventExecutorGroup(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
+        Database db = new InMemoryDatabase();
         try {
             ServerBootstrap b = new ServerBootstrap()
                     .group(bossGroup, workerGroup)
@@ -53,7 +54,7 @@ public class Server {
                             pipeline.addLast("command decoder", new CommandDecoder());
                             pipeline.addLast("string encoder", new StringEncoder(CharsetUtil.UTF_8));
                             pipeline.addLast("command handler", new ChatServerHandler());
-                            pipeline.addLast(executorGroup, "database handler", new DatabaseHandler());
+                            pipeline.addLast(executorGroup, "database handler", new DatabaseHandler(db));
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
