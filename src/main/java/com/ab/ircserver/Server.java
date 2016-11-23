@@ -13,6 +13,7 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -55,6 +56,8 @@ public class Server {
                             pipeline.addLast("string encoder", new StringEncoder(CharsetUtil.UTF_8));
                             pipeline.addLast("command handler", new ChatServerHandler());
                             pipeline.addLast(executorGroup, "database handler", new DatabaseHandler(db));
+                            pipeline.addLast("idleStateHandler", new IdleStateHandler(0, 0, 60));
+                            pipeline.addLast("clientCheckHandler", new CheckClientHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 128)
