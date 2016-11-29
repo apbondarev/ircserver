@@ -16,8 +16,15 @@ public class CommandDecoder extends MessageToMessageDecoder<String> {
 	private static final String USERS = "/users";
 
 	private static final Pattern SPACE = Pattern.compile("(\\w+)\\s*(.*)");
+	
+	private final Database db;
 
-	@Override
+	public CommandDecoder(Database db) {
+        super();
+        this.db = db;
+    }
+
+    @Override
 	protected void decode(ChannelHandlerContext ctx, String msg, List<Object> out) throws Exception {
 		String commandStr = msg.trim();
 		if (commandStr.startsWith(LOGIN)) {
@@ -26,13 +33,13 @@ public class CommandDecoder extends MessageToMessageDecoder<String> {
 			if (matcher.matches()) {
 				String name = matcher.group(1);
 				byte[] password = matcher.group(2).getBytes(StandardCharsets.UTF_8);
-				out.add(new CommandLogin(name, password));
+				out.add(new CommandLogin(db, name, password));
 			} else {
 				out.add(CommandWrong.LOGIN);
 			}
 		} else if (commandStr.startsWith(JOIN)) {
 			String roomName = commandStr.substring(JOIN.length()).trim();
-			out.add(new CommandJoin(roomName));
+			out.add(new CommandJoin(db, roomName));
 		} else if (commandStr.startsWith(LEAVE)) {
 			out.add(CommandLeave.INSTANCE);
 		} else if (commandStr.startsWith(USERS)) {

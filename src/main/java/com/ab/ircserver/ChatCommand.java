@@ -4,21 +4,22 @@ package com.ab.ircserver;
  * Interface for chat commands.
  * @author albondarev
  */
-@FunctionalInterface
 public interface ChatCommand {
-    public enum Result {
-        COMPLETED,
-        IN_DATABASE
+
+    default boolean isLongRunning() {
+        return false;
     }
     
-    Result exec(Session session);
+    void exec(Session session);
 }
 
 class CommandLogin implements ChatCommand {
 	private final String userName;
 	private final byte[] password;
+	private final Database db;
 	
-	CommandLogin(String name, byte[] password) {
+	CommandLogin(Database db, String name, byte[] password) {
+	    this.db = db;
 		this.userName = name;
 		this.password = password;
 	}
@@ -30,18 +31,28 @@ class CommandLogin implements ChatCommand {
 	byte[] password() {
 		return password;
 	}
+	
+	@Override
+	public boolean isLongRunning() {
+        return true;
+    }
 
 	@Override
-	public Result exec(Session session) {
-	    return Result.IN_DATABASE;
+	public void exec(Session session) {
+        User user = db.findOrCreateUser(userName, password);
+
+        ChatState state = session.state();
+        state.login(session, user, this);
 	}
 }
 
 class CommandJoin implements ChatCommand {
+    private final Database db;
 	private final String roomName;
 	
-	CommandJoin(String roomName) {
-		this.roomName = roomName;
+	CommandJoin(Database db, String roomName) {
+		this.db = db;
+        this.roomName = roomName;
 	}
 	
 	String roomName() {
@@ -49,8 +60,16 @@ class CommandJoin implements ChatCommand {
 	}
 
 	@Override
-	public Result exec(Session session) {
-		return Result.IN_DATABASE;
+    public boolean isLongRunning() {
+        return true;
+    }
+	
+	@Override
+	public void exec(Session session) {
+	    Room room = db.findOrCreateRoom(roomName);
+	    
+	    ChatState state = session.state();
+        state.join(session, room);
 	}
 }
 
@@ -66,10 +85,9 @@ class CommandMessage implements ChatCommand {
 	}
 
 	@Override
-	public Result exec(Session session) {
+	public void exec(Session session) {
 		ChatState state = session.state();
 		state.sendMessage(session, this);
-		return Result.COMPLETED;
 	}
 }
 
@@ -79,10 +97,9 @@ class CommandUsers implements ChatCommand {
 	private CommandUsers() {}
 	
 	@Override
-	public Result exec(Session session) {
+	public void exec(Session session) {
 		ChatState state = session.state();
 		state.printUsers(session);
-		return Result.COMPLETED;
 	}
 }
 
@@ -97,9 +114,8 @@ class CommandWrong implements ChatCommand {
 	}
 
 	@Override
-	public Result exec(Session session) {
+	public void exec(Session session) {
 		session.println(message);
-		return Result.COMPLETED;
 	}
 }
 
@@ -109,9 +125,8 @@ class CommandLeave implements ChatCommand {
 	private CommandLeave() {}
 	
 	@Override
-	public Result exec(Session session) {
+	public void exec(Session session) {
 		ChatState state = session.state();
 		state.leave(session);
-		return Result.COMPLETED;
 	}
 }

@@ -52,10 +52,10 @@ public class Server {
                             ChannelPipeline pipeline = ch.pipeline();
                             pipeline.addLast("string delimiter", new DelimiterBasedFrameDecoder(255, Delimiters.lineDelimiter()));
                             pipeline.addLast("string decoder", new StringDecoder(CharsetUtil.UTF_8));
-                            pipeline.addLast("command decoder", new CommandDecoder());
+                            pipeline.addLast("command decoder", new CommandDecoder(db));
                             pipeline.addLast("string encoder", new StringEncoder(CharsetUtil.UTF_8));
                             pipeline.addLast("command handler", new ChatServerHandler());
-                            pipeline.addLast(executorGroup, "database handler", new DatabaseHandler(db));
+                            pipeline.addLast(executorGroup, "database handler", new DatabaseHandler());
                             pipeline.addLast("idleStateHandler", new IdleStateHandler(0, 0, 60));
                             pipeline.addLast("clientCheckHandler", new CheckClientHandler());
                         }
