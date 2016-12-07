@@ -9,6 +9,8 @@ interface Database {
 	
 	Room findOrCreateRoom(String roomName);
 	
+	void save(Room room);
+	
 }
 
 class InMemoryDatabase implements Database {
@@ -28,7 +30,12 @@ class InMemoryDatabase implements Database {
         if (roomName.length() == 0) {
             return Room.UNDEFINED;
         }
-        return rooms.computeIfAbsent(roomName, Room::new);
+        return rooms.computeIfAbsent(roomName, Room::new).copy();
+    }
+
+    @Override
+    public void save(Room room) {
+        rooms.put(room.name(), room.copy());
     }
 
 }

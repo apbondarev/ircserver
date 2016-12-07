@@ -1,16 +1,15 @@
 package com.ab.ircserver;
 
+import java.util.Optional;
+
 /**
  * Interface for chat commands.
  * @author albondarev
  */
 public interface ChatCommand {
 
-    default boolean isLongRunning() {
-        return false;
-    }
-    
     void exec(Session session);
+    
 }
 
 class CommandLogin implements ChatCommand {
@@ -18,59 +17,76 @@ class CommandLogin implements ChatCommand {
 	private final byte[] password;
 	private final Database db;
 	
-	CommandLogin(Database db, String name, byte[] password) {
-	    this.db = db;
+	CommandLogin(String name, byte[] password, Database db) {
 		this.userName = name;
 		this.password = password;
+		this.db = db;
 	}
 	
-	String userName() {
-		return userName;
-	}
-	
-	byte[] password() {
-		return password;
-	}
-	
-	@Override
-	public boolean isLongRunning() {
-        return true;
-    }
-
 	@Override
 	public void exec(Session session) {
-        User user = db.findOrCreateUser(userName, password);
-
-        ChatState state = session.state();
-        state.login(session, user, this);
+        session.putLongCommand(new CommandLoginLong(userName, password, db));
 	}
 }
 
-class CommandJoin implements ChatCommand {
+class CommandLoginLong implements ChatCommand {
+    private final String userName;
+    private final byte[] password;
     private final Database db;
-	private final String roomName;
-	
-	CommandJoin(Database db, String roomName) {
-		this.db = db;
-        this.roomName = roomName;
-	}
-	
-	String roomName() {
-		return roomName;
-	}
-
-	@Override
-    public boolean isLongRunning() {
-        return true;
+    
+    CommandLoginLong(String name, byte[] password, Database db) {
+        this.userName = name;
+        this.password = password;
+        this.db = db;
     }
+    
+    @Override
+    public void exec(Session session) {
+        User user = db.findOrCreateUser(userName, password);
+        session.login(user, password);
+    }
+}
+
+class CommandJoin implements ChatCommand {
+	private final String roomName;
+	private final RoomRegister roomReg;
+    private final Database db;
+	
+	CommandJoin(String roomName, RoomRegister roomReg, Database db) {
+        this.roomName = roomName;
+        this.roomReg = roomReg;
+        this.db = db;
+	}
 	
 	@Override
 	public void exec(Session session) {
-	    Room room = db.findOrCreateRoom(roomName);
-	    
-	    ChatState state = session.state();
-        state.join(session, room);
+	    Optional<Room> room = roomReg.find(roomName);
+	    if (room.isPresent()) {
+	        session.join(room.get());
+	    } else {
+	        session.putLongCommand(new CommandJoinLong(roomName, roomReg, db));
+	    }
 	}
+}
+
+class CommandJoinLong implements ChatCommand {
+    private final Database db;
+    private final String roomName;
+    private final RoomRegister roomReg;
+    
+    CommandJoinLong(String roomName, RoomRegister roomReg, Database db) {
+        this.roomName = roomName;
+        this.roomReg = roomReg;
+        this.db = db;
+    }
+    
+    @Override
+    public void exec(Session session) {
+        Optional<Room> optionalRoom = roomReg.find(roomName);
+        Room oldOrNewRoom = optionalRoom.orElse(db.findOrCreateRoom(roomName));
+        Room room = roomReg.findOrProduce(roomName, r -> oldOrNewRoom);
+        session.join(room);
+    }
 }
 
 class CommandMessage implements ChatCommand {
@@ -86,8 +102,7 @@ class CommandMessage implements ChatCommand {
 
 	@Override
 	public void exec(Session session) {
-		ChatState state = session.state();
-		state.sendMessage(session, this);
+		session.sendMessage(this);
 	}
 }
 
@@ -98,8 +113,7 @@ class CommandUsers implements ChatCommand {
 	
 	@Override
 	public void exec(Session session) {
-		ChatState state = session.state();
-		state.printUsers(session);
+		session.printUsers();
 	}
 }
 
@@ -126,7 +140,22 @@ class CommandLeave implements ChatCommand {
 	
 	@Override
 	public void exec(Session session) {
-		ChatState state = session.state();
-		state.leave(session);
+		session.leave();
 	}
+}
+
+class CommandSaveRoom implements ChatCommand {
+    private final Room room;
+    private final Database db;
+
+    CommandSaveRoom(Room room, Database db) {
+        this.room = room;
+        this.db = db;
+    }
+
+    @Override
+    public void exec(Session session) {
+        db.save(room);
+    }
+    
 }

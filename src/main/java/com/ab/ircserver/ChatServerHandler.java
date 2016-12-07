@@ -1,6 +1,7 @@
 package com.ab.ircserver;
 
-import io.netty.channel.Channel;
+import java.util.Optional;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
@@ -14,14 +15,15 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ChatCommand> 
 
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, ChatCommand cmd) throws Exception {
-		Channel channel = ctx.channel();
-		if (cmd.isLongRunning()) {
-		    ctx.fireChannelRead(cmd);
-		} else {
-		    Session session = Session.current(channel);
-		    cmd.exec(session);
-		    ctx.fireChannelReadComplete();
-		}
+	    Session session = Session.current(ctx.channel());
+	    cmd.exec(session);
+	    
+	    Optional<ChatCommand> longCmd = session.takeLongCommand();
+	    if  (longCmd.isPresent()) {
+	        ctx.fireChannelRead(longCmd.get());
+	    } else {
+	        ctx.fireChannelReadComplete();
+	    }
 	}
 
 	@Override

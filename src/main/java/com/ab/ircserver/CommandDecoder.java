@@ -18,10 +18,12 @@ public class CommandDecoder extends MessageToMessageDecoder<String> {
 	private static final Pattern SPACE = Pattern.compile("(\\w+)\\s*(.*)");
 	
 	private final Database db;
+    private final RoomRegister roomReg;
 
-	public CommandDecoder(Database db) {
+	public CommandDecoder(Database db, RoomRegister roomReg) {
         super();
         this.db = db;
+        this.roomReg = roomReg;
     }
 
     @Override
@@ -33,13 +35,13 @@ public class CommandDecoder extends MessageToMessageDecoder<String> {
 			if (matcher.matches()) {
 				String name = matcher.group(1);
 				byte[] password = matcher.group(2).getBytes(StandardCharsets.UTF_8);
-				out.add(new CommandLogin(db, name, password));
+				out.add(new CommandLogin(name, password, db));
 			} else {
 				out.add(CommandWrong.LOGIN);
 			}
 		} else if (commandStr.startsWith(JOIN)) {
 			String roomName = commandStr.substring(JOIN.length()).trim();
-			out.add(new CommandJoin(db, roomName));
+			out.add(new CommandJoin(roomName, roomReg, db));
 		} else if (commandStr.startsWith(LEAVE)) {
 			out.add(CommandLeave.INSTANCE);
 		} else if (commandStr.startsWith(USERS)) {

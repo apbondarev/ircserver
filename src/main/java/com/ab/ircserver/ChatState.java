@@ -5,7 +5,7 @@ import java.util.Optional;
 
 interface ChatState {
 	
-	void login(Session session, User user, CommandLogin cmd);
+	void login(Session session, User user, byte[] password);
 	
 	void join(Session session, Room newRoom);
 	
@@ -21,8 +21,8 @@ interface ChatState {
 class Initial implements ChatState {
 
 	@Override
-	public void login(Session session, User user, CommandLogin cmd) {
-		if (!user.isCorrectPassword(cmd.password())) {
+	public void login(Session session, User user, byte[] password) {
+		if (!user.isCorrectPassword(password)) {
 			session.println("Wrong password");
 			return;
 		}
@@ -67,7 +67,7 @@ class LoggedIn implements ChatState {
 	}
 	
 	@Override
-	public void login(Session session, User user, CommandLogin cmd) {
+	public void login(Session session, User user, byte[] password) {
 		session.println("You've logged in already as user '" + user.name() + "'");
 	}
 
@@ -119,7 +119,7 @@ class Joined implements ChatState {
 	}
 	
 	@Override
-	public void login(Session session, User user, CommandLogin cmd) {
+	public void login(Session session, User user, byte[] password) {
 		session.println("You've logged in already as user '" + user.name() + "'");
 	}
 
@@ -169,7 +169,7 @@ class Joined implements ChatState {
 	
 class Disconnected implements ChatState {
 	
-	public void login(Session session, User user, CommandLogin cmd) {
+	public void login(Session session, User user, byte[] password) {
 		// do nothing
 	}
 	

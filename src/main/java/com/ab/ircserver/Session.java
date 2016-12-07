@@ -13,9 +13,10 @@ import io.netty.util.AttributeKey;
 public class Session {
 
     static final AttributeKey<Session> KEY_SESSION = AttributeKey.valueOf("session");
-    static final AttributeKey<ChatState> KEY_STATE = AttributeKey.valueOf("state");
 
     private final Channel channel;
+    private volatile ChatState state;
+    private volatile ChatCommand longCommand;
 
 	private Session(Channel channel) {
 		this.channel = channel;
@@ -33,18 +34,13 @@ public class Session {
 	    return channel.attr(KEY_SESSION).get();
 	}
 	
-	public ChatState state() {
-	    return channel.attr(KEY_STATE).get();
-	}
-	
 	public Optional<String> username() {
-	    Optional<User> user = state().user();
+	    Optional<User> user = state.user();
 	    return user.map(User::name);
 	}
 	
 	public void setState(ChatState state) {
-		Attribute<ChatState> attrState = channel.attr(KEY_STATE);
-		attrState.set(state);
+        this.state = state;
 	}
 	
 	private void sendNoFlush(Message msg) {
@@ -74,5 +70,37 @@ public class Session {
 		ChannelFuture future = channel.writeAndFlush(message);
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
+
+    public void putLongCommand(ChatCommand cmd) {
+        this.longCommand = cmd;
+    }
+
+    public Optional<ChatCommand> takeLongCommand() {
+        Optional<ChatCommand> result = Optional.ofNullable(longCommand);
+        if (result.isPresent()) {
+            longCommand = null;
+        }
+        return result;
+    }
+
+    public void login(User user, byte[] password) {
+        state.login(this, user, password);
+    }
+
+    public void join(Room room) {
+        state.join(this, room);
+    }
+
+    public void sendMessage(CommandMessage commandMessage) {
+        state.sendMessage(this, commandMessage);
+    }
+
+    public void printUsers() {
+        state.printUsers(this);
+    }
+
+    public void leave() {
+        state.leave(this);
+    }
 
 }

@@ -1,8 +1,11 @@
 package com.ab.ircserver;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.Lock;
@@ -17,13 +20,19 @@ public class Room {
 
 	private final String name;
 	private final BlockingQueue<Session> sessions = new ArrayBlockingQueue<>(CAPACITY);
-	private final List<Message> messages = new ArrayList<>();
-	private final Lock lock = new ReentrantLock();
+	private final Queue<Message> messages;
+	private final Lock lockMessages = new ReentrantLock();
 
 	public Room(String name) {
 		this.name = name;
+		messages = new ArrayDeque<>(CAPACITY);
 	}
-
+	
+	private Room(String name, Collection<Message> messages) {
+        this.name = name;
+	    this.messages = new ArrayDeque<>(messages);
+	}
+	
 	public String name() {
 		return name;
 	}
@@ -45,25 +54,25 @@ public class Room {
 	}
 
 	public List<Message> lastMessages() {
-		List<Message> result = new ArrayList<>();
-		lock.lock();
+		lockMessages.lock();
 		try {
+		    List<Message> result = new ArrayList<>(messages.size());
 			result.addAll(messages);
+			return result;
 		} finally {
-			lock.unlock();
+			lockMessages.unlock();
 		}
-		return result;
 	}
 
 	public void send(Message msg) {
-		lock.lock();
+		lockMessages.lock();
 		try {
-			while (messages.size() >= CAPACITY) {
-				messages.remove(0);
+			while (messages.size() + 1 >= CAPACITY) {
+				messages.remove();
 			}
 		    messages.add(msg);
 		} finally {
-			lock.unlock();
+			lockMessages.unlock();
 		}
 		sessions.stream()
 			.forEach( s -> s.send(msg) );
@@ -71,8 +80,16 @@ public class Room {
 
 	public void notifyMessage(String str) {
 		sessions.stream()
-			.forEach(s -> {
-				s.println(str);
-			});		
+			.forEach( s -> s.println(str) );		
 	}
+
+    public Room copy() {
+        lockMessages.lock();
+        try {
+            return new Room(name, messages);
+        } finally {
+            lockMessages.unlock();
+        }
+    }
+
 }
