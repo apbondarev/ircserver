@@ -29,7 +29,9 @@ public class ChatServerHandler extends SimpleChannelInboundHandler<ChatCommand> 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		cause.printStackTrace();
-		ctx.close();
+		Session session = Session.current(ctx.channel());
+		session.println("Error: " + cause.getMessage());
+        CommandLeave.INSTANCE.exec(session);
 	}
 
 }

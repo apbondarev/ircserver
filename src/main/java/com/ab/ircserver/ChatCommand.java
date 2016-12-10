@@ -102,7 +102,7 @@ class CommandMessage implements ChatCommand {
 
 	@Override
 	public void exec(Session session) {
-		session.sendMessage(this);
+		session.sendMessage(text);
 	}
 }
 

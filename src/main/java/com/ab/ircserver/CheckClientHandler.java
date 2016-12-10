@@ -13,4 +13,11 @@ public class CheckClientHandler extends ChannelDuplexHandler {
         }
     }
 
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        Session session = Session.current(ctx.channel());
+        session.println("Error: " + cause.getMessage());
+        CommandLeave.INSTANCE.exec(session);
+    }
+
 }

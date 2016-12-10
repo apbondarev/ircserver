@@ -91,8 +91,8 @@ public class Session {
         state.join(this, room);
     }
 
-    public void sendMessage(CommandMessage commandMessage) {
-        state.sendMessage(this, commandMessage);
+    public void sendMessage(String text) {
+        state.sendMessage(this, text);
     }
 
     public void printUsers() {

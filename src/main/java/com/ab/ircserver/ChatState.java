@@ -11,7 +11,7 @@ interface ChatState {
 	
 	void printUsers(Session session);
 	
-	void sendMessage(Session session, CommandMessage cmd);
+	void sendMessage(Session session, String text);
 	
 	void leave(Session session);
 	
@@ -42,14 +42,14 @@ class Initial implements ChatState {
 	}
 
 	@Override
-	public void sendMessage(Session session, CommandMessage cmd) {
+	public void sendMessage(Session session, String text) {
 		session.println("Start with: /login name password");
 	}
 	
 	@Override
 	public void leave(Session session) {
 		session.setState(new Disconnected());
-		session.close("Have a good day!\r\n");
+		session.close("Disconnect.\r\n");
 	}
 
     @Override
@@ -91,14 +91,14 @@ class LoggedIn implements ChatState {
 	}
 
 	@Override
-	public void sendMessage(Session session, CommandMessage cmd) {
+	public void sendMessage(Session session, String text) {
 		session.println("Join a channel: /join channel");
 	}
 	
 	@Override
 	public void leave(Session session) {
 		session.setState(new Disconnected());
-		session.close("Have a good day!\r\n");
+		session.close("Disconnect.\r\n");
 	}
 	
 	@Override
@@ -148,17 +148,17 @@ class Joined implements ChatState {
 	}
 
 	@Override
-	public void sendMessage(Session session, CommandMessage cmd) {
-		Message msg = new Message(user.name(), cmd.text());
+	public void sendMessage(Session session, String text) {
+		Message msg = new Message(user.name(), text);
 		room.send(msg);
 	}
 	
 	@Override
 	public void leave(Session session) {
+	    session.setState(new Disconnected());
 		room.removeSession(session);
 		room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.name() + "'");
-		session.setState(new Disconnected());
-		session.close("Have a good day!\r\n");
+		session.close("Disconnect.\r\n");
 	}
 	
 	@Override
@@ -185,7 +185,7 @@ class Disconnected implements ChatState {
 		// do nothing
 	}
 	
-	public void sendMessage(Session session, CommandMessage cmd) {
+	public void sendMessage(Session session, String text) {
 		// do nothing
 	}
 	
