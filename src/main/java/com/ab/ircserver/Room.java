@@ -19,8 +19,9 @@ public class Room {
 	public static final Room UNDEFINED = new Room("undefined");
 
 	private final String name;
-	private final BlockingQueue<Session> sessions = new ArrayBlockingQueue<>(CAPACITY);
 	private final Queue<Message> messages;
+	
+	private final BlockingQueue<Session> sessions = new ArrayBlockingQueue<>(CAPACITY);
 	private final Lock lockMessages = new ReentrantLock();
 
 	public Room(String name) {
