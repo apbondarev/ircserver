@@ -2,7 +2,6 @@ package com.ab.ircserver;
 
 import java.util.Collection;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -15,8 +14,7 @@ public class Session {
     static final AttributeKey<Session> KEY_SESSION = AttributeKey.valueOf("session");
 
     private final Channel channel;
-    private volatile ChatState state;
-    private volatile ChatCommand longCommand;
+    private ChatState state;
 
 	private Session(Channel channel) {
 		this.channel = channel;
@@ -34,6 +32,10 @@ public class Session {
 	    return channel.attr(KEY_SESSION).get();
 	}
 	
+	public Channel channel() {
+	    return channel;
+	}
+	
 	public Optional<String> username() {
 	    Optional<User> user = state.user();
 	    return user.map(User::name);
@@ -47,21 +49,11 @@ public class Session {
 		channel.write(msg.username() + ": " + msg.text() + "\r\n");
 	}
 	
-	public void send(Message msg) {
-		sendNoFlush(msg);
-		channel.flush();
-	}
-	
 	public void send(Collection<Message> messages) {
 		messages.forEach(this::sendNoFlush);
         channel.flush();
 	}
 	
-	public void println(Stream<String> stream) {
-		stream.forEach(u -> channel.write(u + "\r\n"));
-		channel.flush();
-	}
-
 	public void println(String string) {
 		channel.writeAndFlush(string + "\r\n");
 	}
@@ -70,18 +62,6 @@ public class Session {
 		ChannelFuture future = channel.writeAndFlush(message);
 		future.addListener(ChannelFutureListener.CLOSE);
 	}
-
-    public void putLongCommand(ChatCommand cmd) {
-        this.longCommand = cmd;
-    }
-
-    public Optional<ChatCommand> takeLongCommand() {
-        Optional<ChatCommand> result = Optional.ofNullable(longCommand);
-        if (result.isPresent()) {
-            longCommand = null;
-        }
-        return result;
-    }
 
     public void login(User user, byte[] password) {
         state.login(this, user, password);

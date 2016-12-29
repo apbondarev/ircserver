@@ -2,6 +2,9 @@ package com.ab.ircserver;
 
 import java.util.Optional;
 
+import io.netty.util.concurrent.EventExecutorGroup;
+import io.netty.util.concurrent.Future;
+
 /**
  * Interface for chat commands.
  * @author albondarev
@@ -16,46 +19,44 @@ class CommandLogin implements ChatCommand {
 	private final String userName;
 	private final byte[] password;
 	private final Database db;
+	private final EventExecutorGroup executor;
 	
-	CommandLogin(String name, byte[] password, Database db) {
+	CommandLogin(String name, byte[] password, Database db, EventExecutorGroup executor) {
 		this.userName = name;
 		this.password = password;
 		this.db = db;
+		this.executor = executor;
 	}
 	
 	@Override
 	public void exec(Session session) {
-        session.putLongCommand(new CommandLoginLong(userName, password, db));
+	    Future<?> future = executor.submit(() -> {
+	        User user = db.findOrCreateUser(userName, password);
+	        session.login(user, password);
+	    });
+	    future.addListener(f -> {
+	        if (f.isDone() && !f.isSuccess()) {
+	            if (f.isCancelled()) {
+	                session.println("Operation has been cancelled");
+	            } else {
+	                session.println(f.cause().getMessage());
+	            }
+	        }
+	    });
 	}
-}
-
-class CommandLoginLong implements ChatCommand {
-    private final String userName;
-    private final byte[] password;
-    private final Database db;
-    
-    CommandLoginLong(String name, byte[] password, Database db) {
-        this.userName = name;
-        this.password = password;
-        this.db = db;
-    }
-    
-    @Override
-    public void exec(Session session) {
-        User user = db.findOrCreateUser(userName, password);
-        session.login(user, password);
-    }
 }
 
 class CommandJoin implements ChatCommand {
 	private final String roomName;
 	private final RoomRegister roomReg;
     private final Database db;
+    private final EventExecutorGroup executor;
 	
-	CommandJoin(String roomName, RoomRegister roomReg, Database db) {
+	CommandJoin(String roomName, RoomRegister roomReg, Database db, EventExecutorGroup executor) {
         this.roomName = roomName;
         this.roomReg = roomReg;
         this.db = db;
+        this.executor = executor;
 	}
 	
 	@Override
@@ -64,29 +65,23 @@ class CommandJoin implements ChatCommand {
 	    if (room.isPresent()) {
 	        session.join(room.get());
 	    } else {
-	        session.putLongCommand(new CommandJoinLong(roomName, roomReg, db));
+	        Future<?> future = executor.submit(() -> {
+	            Optional<Room> optionalRoom = roomReg.find(roomName);
+	            Room oldOrNewRoom = optionalRoom.orElse(db.findOrCreateRoom(roomName));
+	            Room roomNew = roomReg.findOrProduce(roomName, r -> oldOrNewRoom);
+	            session.join(roomNew);
+	        });
+	        future.addListener(f -> {
+	            if (f.isDone() && !f.isSuccess()) {
+	                if (f.isCancelled()) {
+	                    session.println("Operation has been cancelled");
+	                } else {
+	                    session.println(f.cause().getMessage());
+	                }
+	            }
+	        });
 	    }
 	}
-}
-
-class CommandJoinLong implements ChatCommand {
-    private final Database db;
-    private final String roomName;
-    private final RoomRegister roomReg;
-    
-    CommandJoinLong(String roomName, RoomRegister roomReg, Database db) {
-        this.roomName = roomName;
-        this.roomReg = roomReg;
-        this.db = db;
-    }
-    
-    @Override
-    public void exec(Session session) {
-        Optional<Room> optionalRoom = roomReg.find(roomName);
-        Room oldOrNewRoom = optionalRoom.orElse(db.findOrCreateRoom(roomName));
-        Room room = roomReg.findOrProduce(roomName, r -> oldOrNewRoom);
-        session.join(room);
-    }
 }
 
 class CommandMessage implements ChatCommand {

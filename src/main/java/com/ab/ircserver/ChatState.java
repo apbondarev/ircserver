@@ -3,6 +3,8 @@ package com.ab.ircserver;
 import java.util.List;
 import java.util.Optional;
 
+import io.netty.channel.Channel;
+
 interface ChatState {
 	
 	void login(Session session, User user, byte[] password);
@@ -144,7 +146,9 @@ class Joined implements ChatState {
 
 	@Override
 	public void printUsers(Session session) {
-		session.println(room.users().stream());
+	    Channel channel = session.channel();
+		room.users().forEach(u -> channel.write(u + "\r\n"));
+        channel.flush();
 	}
 
 	@Override

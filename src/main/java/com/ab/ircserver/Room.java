@@ -6,11 +6,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.util.concurrent.GlobalEventExecutor;
 
 public class Room {
 
@@ -21,17 +23,17 @@ public class Room {
 	private final String name;
 	private final Queue<Message> messages;
 	
-	private final BlockingQueue<Session> sessions = new ArrayBlockingQueue<>(CAPACITY);
-	private final Lock lockMessages = new ReentrantLock();
+	private final ChannelGroup channels;
+	private final Lock lock = new ReentrantLock();
 
 	public Room(String name) {
-		this.name = name;
-		messages = new ArrayDeque<>(CAPACITY);
+		this(name, new ArrayDeque<>(CAPACITY));
 	}
 	
 	private Room(String name, Collection<Message> messages) {
         this.name = name;
 	    this.messages = new ArrayDeque<>(messages);
+	    this.channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	}
 	
 	public String name() {
@@ -39,58 +41,79 @@ public class Room {
 	}
 
 	public boolean addSession(Session session) {
-		return sessions.offer(session);
+	    lock.lock();
+	    try {
+	        if (channels.size() >= CAPACITY) {
+	            return false;
+	        }
+	        return channels.add(session.channel());
+	    } finally {
+	        lock.unlock();
+	    }
 	}
 
 	public boolean removeSession(Session session) {
-		return sessions.remove(session);
+	    lock.lock();
+        try {
+            return channels.remove(session.channel());
+        } finally {
+            lock.unlock();
+        }
 	}
 
 	public List<String> users() {
-		return sessions.stream()
-		        .map(Session::username)
-		        .filter(Optional::isPresent)
-		        .map(Optional::get)
-		        .collect(Collectors.toList());
+	    lock.lock();
+        try {
+            return channels.stream()
+                .map(c -> Session.current(c).username())
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
+        } finally {
+            lock.unlock();
+        }
 	}
 
 	public List<Message> lastMessages() {
-		lockMessages.lock();
+		lock.lock();
 		try {
 		    List<Message> result = new ArrayList<>(messages.size());
 			result.addAll(messages);
 			return result;
 		} finally {
-			lockMessages.unlock();
+			lock.unlock();
 		}
 	}
 
 	public void send(Message msg) {
-		lockMessages.lock();
+		lock.lock();
 		try {
 			while (messages.size() + 1 >= CAPACITY) {
 				messages.remove();
 			}
 		    messages.add(msg);
 		} finally {
-			lockMessages.unlock();
+			lock.unlock();
 		}
-		sessions.stream()
-			.forEach( s -> s.send(msg) );
+		channels.writeAndFlush(msg.username() + ": " + msg.text() + "\r\n");
+		save();
 	}
 
 	public void notifyMessage(String str) {
-		sessions.stream()
-			.forEach( s -> s.println(str) );		
+	    channels.writeAndFlush(str + "\r\n");
 	}
 
     public Room copy() {
-        lockMessages.lock();
+        lock.lock();
         try {
             return new Room(name, messages);
         } finally {
-            lockMessages.unlock();
+            lock.unlock();
         }
+    }
+    
+    private void save() {
+        // TODO save room in database
     }
 
 }

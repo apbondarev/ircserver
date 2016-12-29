@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.util.concurrent.EventExecutorGroup;
 
 public class CommandDecoder extends MessageToMessageDecoder<String> {
 
@@ -19,11 +20,13 @@ public class CommandDecoder extends MessageToMessageDecoder<String> {
 	
 	private final Database db;
     private final RoomRegister roomReg;
+    private final EventExecutorGroup executorGroup;
 
-	public CommandDecoder(Database db, RoomRegister roomReg) {
+	public CommandDecoder(Database db, RoomRegister roomReg, EventExecutorGroup executorGroup) {
         super();
         this.db = db;
         this.roomReg = roomReg;
+        this.executorGroup = executorGroup;
     }
 
     @Override
@@ -35,13 +38,13 @@ public class CommandDecoder extends MessageToMessageDecoder<String> {
 			if (matcher.matches()) {
 				String name = matcher.group(1);
 				byte[] password = matcher.group(2).getBytes(StandardCharsets.UTF_8);
-				out.add(new CommandLogin(name, password, db));
+				out.add(new CommandLogin(name, password, db, executorGroup));
 			} else {
 				out.add(CommandWrong.LOGIN);
 			}
 		} else if (commandStr.startsWith(JOIN)) {
 			String roomName = commandStr.substring(JOIN.length()).trim();
-			out.add(new CommandJoin(roomName, roomReg, db));
+			out.add(new CommandJoin(roomName, roomReg, db, executorGroup));
 		} else if (commandStr.startsWith(LEAVE)) {
 			out.add(CommandLeave.INSTANCE);
 		} else if (commandStr.startsWith(USERS)) {
