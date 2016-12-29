@@ -14,6 +14,9 @@ public class RoomTest {
     
     @Mock
     Session s2;
+    
+    @Mock
+    Factory factory;
 
     @Test
     public void testUsers() {
@@ -23,7 +26,7 @@ public class RoomTest {
 //        Session s2 = Session.anonimous(channel2);
 //        s2.login(new User("user2", "password2".getBytes()), "password2".getBytes());
         
-        Room room = new Room("room1");
+        Room room = new Room("room1", factory);
         assertEquals(0, room.users().size());
         
         room.addSession(s1);

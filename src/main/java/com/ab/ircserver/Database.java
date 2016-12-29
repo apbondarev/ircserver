@@ -7,7 +7,7 @@ interface Database {
 	
 	User findOrCreateUser(String name, byte[] password);
 	
-	Room findOrCreateRoom(String roomName);
+	Room findOrCreateRoom(String roomName, Factory factory);
 	
 	void save(Room room);
 	
@@ -25,12 +25,12 @@ class InMemoryDatabase implements Database {
 	}
 	
     @Override
-    public Room findOrCreateRoom(String roomName) {
+    public Room findOrCreateRoom(String roomName, Factory factory) {
     	Objects.requireNonNull(roomName);
         if (roomName.length() == 0) {
             return Room.UNDEFINED;
         }
-        return rooms.computeIfAbsent(roomName, Room::new).copy();
+        return rooms.computeIfAbsent(roomName, n -> new Room(n, factory)).copy();
     }
 
     @Override

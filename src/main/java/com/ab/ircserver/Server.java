@@ -42,8 +42,7 @@ public class Server {
         int threads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
         EventLoopGroup workerGroup = new NioEventLoopGroup(threads);
         EventExecutorGroup executorGroup = new DefaultEventExecutorGroup(threads);
-        Database db = new InMemoryDatabase();
-        RoomRegister roomReg = new RoomRegisterImpl();
+        Factory factory = new FactoryImpl(new InMemoryDatabase(), executorGroup, new RoomRegisterImpl()); 
         try {
             ServerBootstrap b = new ServerBootstrap()
                     .group(bossGroup, workerGroup)
@@ -54,7 +53,7 @@ public class Server {
                             ChannelPipeline pipeline = ch.pipeline();
                             pipeline.addLast("string delimiter", new DelimiterBasedFrameDecoder(255, Delimiters.lineDelimiter()));
                             pipeline.addLast("string decoder", new StringDecoder(CharsetUtil.UTF_8));
-                            pipeline.addLast("command decoder", new CommandDecoder(db, roomReg, executorGroup));
+                            pipeline.addLast("command decoder", new CommandDecoder(factory));
                             pipeline.addLast("string encoder", new StringEncoder(CharsetUtil.UTF_8));
                             pipeline.addLast("command handler", new ChatServerHandler());
                             pipeline.addLast("idleStateHandler", new IdleStateHandler(0, 0, 60));

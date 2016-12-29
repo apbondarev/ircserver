@@ -21,11 +21,11 @@ class CommandLogin implements ChatCommand {
 	private final Database db;
 	private final EventExecutorGroup executor;
 	
-	CommandLogin(String name, byte[] password, Database db, EventExecutorGroup executor) {
+	CommandLogin(String name, byte[] password, Factory factory) {
 		this.userName = name;
 		this.password = password;
-		this.db = db;
-		this.executor = executor;
+		this.db = factory.database();
+		this.executor = factory.executor();
 	}
 	
 	@Override
@@ -51,12 +51,14 @@ class CommandJoin implements ChatCommand {
 	private final RoomRegister roomReg;
     private final Database db;
     private final EventExecutorGroup executor;
+    private final Factory factory;
 	
-	CommandJoin(String roomName, RoomRegister roomReg, Database db, EventExecutorGroup executor) {
+	CommandJoin(String roomName, Factory factory) {
         this.roomName = roomName;
-        this.roomReg = roomReg;
-        this.db = db;
-        this.executor = executor;
+        this.factory = factory;
+        this.roomReg = factory.roomRegister();
+        this.db = factory.database();
+        this.executor = factory.executor();
 	}
 	
 	@Override
@@ -67,7 +69,7 @@ class CommandJoin implements ChatCommand {
 	    } else {
 	        Future<?> future = executor.submit(() -> {
 	            Optional<Room> optionalRoom = roomReg.find(roomName);
-	            Room oldOrNewRoom = optionalRoom.orElse(db.findOrCreateRoom(roomName));
+	            Room oldOrNewRoom = optionalRoom.orElse(db.findOrCreateRoom(roomName, factory));
 	            Room roomNew = roomReg.findOrProduce(roomName, r -> oldOrNewRoom);
 	            session.join(roomNew);
 	        });
@@ -137,20 +139,4 @@ class CommandLeave implements ChatCommand {
 	public void exec(Session session) {
 		session.leave();
 	}
-}
-
-class CommandSaveRoom implements ChatCommand {
-    private final Room room;
-    private final Database db;
-
-    CommandSaveRoom(Room room, Database db) {
-        this.room = room;
-        this.db = db;
-    }
-
-    @Override
-    public void exec(Session session) {
-        db.save(room);
-    }
-    
 }
