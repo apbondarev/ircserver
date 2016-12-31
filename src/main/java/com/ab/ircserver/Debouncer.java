@@ -7,7 +7,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.ScheduledFuture;
 
-public class Debouncer {
+public interface Debouncer {
+    
+    void exec(Runnable task);
+    
+}
+
+class DebouncerImpl implements Debouncer {
 
     private final long delay;
     
@@ -19,7 +25,7 @@ public class Debouncer {
     
     private Lock lock = new ReentrantLock();
     
-    public Debouncer(long delay, TimeUnit timeUnit, EventExecutorGroup executor) {
+    public DebouncerImpl(long delay, TimeUnit timeUnit, EventExecutorGroup executor) {
         super();
         this.delay = delay;
         this.timeUnit = timeUnit;
@@ -35,7 +41,7 @@ public class Debouncer {
                 ScheduledFuture<?> future = executor.schedule(task, delay, timeUnit);
                 future.addListener(f -> {
                     if (f.isDone() && !f.isSuccess()) {
-                        // TODO write error message
+                        System.out.println(f.cause().getMessage());
                     }
                 });
             }

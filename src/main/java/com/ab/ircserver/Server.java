@@ -15,8 +15,6 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.CharsetUtil;
-import io.netty.util.concurrent.DefaultEventExecutorGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
 
 public class Server {
 
@@ -39,13 +37,15 @@ public class Server {
 
     private void run() {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        
         int threads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
         EventLoopGroup workerGroup = new NioEventLoopGroup(threads);
-        EventExecutorGroup executorGroup = new DefaultEventExecutorGroup(threads);
-        Factory factory = new FactoryImpl(new InMemoryDatabase(), executorGroup, new RoomRegisterImpl()); 
+        Database db = new InMemoryDatabase();
+        Factory factory = new FactoryImpl(db, workerGroup);
+        
         try {
             ServerBootstrap b = new ServerBootstrap()
-                    .group(bossGroup, workerGroup)
+                    .group(bossGroup, factory.eventLoopGroup())
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
@@ -72,7 +72,7 @@ public class Server {
             e.printStackTrace();
         } finally {
             bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+            factory.shutdownGracefully();
         }
     }
 

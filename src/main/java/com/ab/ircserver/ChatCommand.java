@@ -1,9 +1,7 @@
 package com.ab.ircserver;
 
 import java.util.Optional;
-
-import io.netty.util.concurrent.EventExecutorGroup;
-import io.netty.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface for chat commands.
@@ -19,30 +17,23 @@ class CommandLogin implements ChatCommand {
 	private final String userName;
 	private final byte[] password;
 	private final Database db;
-	private final EventExecutorGroup executor;
 	
 	CommandLogin(String name, byte[] password, Factory factory) {
 		this.userName = name;
 		this.password = password;
 		this.db = factory.database();
-		this.executor = factory.executor();
 	}
 	
 	@Override
 	public void exec(Session session) {
-	    Future<?> future = executor.submit(() -> {
-	        User user = db.findOrCreateUser(userName, password);
-	        session.login(user, password);
-	    });
-	    future.addListener(f -> {
-	        if (f.isDone() && !f.isSuccess()) {
-	            if (f.isCancelled()) {
-	                session.println("Operation has been cancelled");
-	            } else {
-	                session.println(f.cause().getMessage());
-	            }
-	        }
-	    });
+	    CompletableFuture<User> future = db.findOrCreateUser(userName, password);
+        future.whenComplete((user, e) -> {
+            if (e == null) {
+                session.login(user, password);
+            } else {
+                session.println(e.getMessage());
+            }
+        });
 	}
 }
 
@@ -50,15 +41,11 @@ class CommandJoin implements ChatCommand {
 	private final String roomName;
 	private final RoomRegister roomReg;
     private final Database db;
-    private final EventExecutorGroup executor;
-    private final Factory factory;
 	
 	CommandJoin(String roomName, Factory factory) {
         this.roomName = roomName;
-        this.factory = factory;
         this.roomReg = factory.roomRegister();
         this.db = factory.database();
-        this.executor = factory.executor();
 	}
 	
 	@Override
@@ -67,19 +54,13 @@ class CommandJoin implements ChatCommand {
 	    if (room.isPresent()) {
 	        session.join(room.get());
 	    } else {
-	        Future<?> future = executor.submit(() -> {
-	            Optional<Room> optionalRoom = roomReg.find(roomName);
-	            Room oldOrNewRoom = optionalRoom.orElse(db.findOrCreateRoom(roomName, factory));
-	            Room roomNew = roomReg.findOrProduce(roomName, r -> oldOrNewRoom);
-	            session.join(roomNew);
-	        });
-	        future.addListener(f -> {
-	            if (f.isDone() && !f.isSuccess()) {
-	                if (f.isCancelled()) {
-	                    session.println("Operation has been cancelled");
-	                } else {
-	                    session.println(f.cause().getMessage());
-	                }
+	        CompletableFuture<Room> future = db.findOrCreateRoom(roomName);
+	        future.whenComplete((oldOrNewRoom, e) -> {
+	            if (e == null) {
+	                Room roomNew = roomReg.findOrProduce(roomName, r -> oldOrNewRoom);
+	                session.join(roomNew);
+	            } else {
+	                session.println(e.getMessage());
 	            }
 	        });
 	    }

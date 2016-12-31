@@ -18,24 +18,20 @@ public class Room {
 
 	public static final int CAPACITY = 10;
 
-	public static final Room UNDEFINED = new Room("undefined", null);
+	public static final Room UNDEFINED = new Room("undefined");
 
 	private final String name;
 	private final Queue<Message> messages;
 	
-	private final Factory factory;
-	private final Debouncer debouncer;
 	private final ChannelGroup channels;
 	private final Lock lock = new ReentrantLock();
 	
-	public Room(String name, Factory factory) {
-		this(name, new ArrayDeque<>(CAPACITY), factory);
+	public Room(String name) {
+		this(name, new ArrayDeque<>(CAPACITY));
 	}
 	
-	private Room(String name, Collection<Message> messages, Factory factory) {
+	public Room(String name, Collection<Message> messages) {
         this.name = name;
-        this.factory = factory;
-        this.debouncer = factory.debouncer();
 	    this.messages = new ArrayDeque<>(messages);
 	    this.channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	}
@@ -110,17 +106,17 @@ public class Room {
     public Room copy() {
         lock.lock();
         try {
-            return new Room(name, messages, factory);
+            return new Room(name, messages);
         } finally {
             lock.unlock();
         }
     }
     
     private void save() {
-        debouncer.exec(() -> {
-            Database db = factory.database();
-            db.save(this);
-        });
+//        debouncer.exec(() -> {
+//            Database db = factory.database();
+//            db.save(this);
+//        });
     }
 
 }

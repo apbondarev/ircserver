@@ -2,6 +2,8 @@ package com.ab.ircserver;
 
 import java.util.concurrent.TimeUnit;
 
+import io.netty.channel.EventLoopGroup;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 
 public interface Factory {
@@ -10,25 +12,35 @@ public interface Factory {
     
     Debouncer debouncer();
     
+    EventLoopGroup eventLoopGroup();
+    
     EventExecutorGroup executor();
     
     RoomRegister roomRegister();
     
+    void shutdownGracefully();
+
 }
 
 class FactoryImpl implements Factory {
 
     private final Database db;
     
+    private final EventLoopGroup eventExecutorGroup;
+    
     private final EventExecutorGroup executor;
 
     private final RoomRegister roomReg;
     
-    FactoryImpl(Database db, EventExecutorGroup executor, RoomRegister roomReg) {
+    FactoryImpl(Database db, EventLoopGroup eventExecutorGroup) {
         super();
         this.db = db;
-        this.executor = executor;
-        this.roomReg = roomReg;
+        this.roomReg = new RoomRegisterImpl();
+        
+        this.eventExecutorGroup = eventExecutorGroup;
+        
+        int threads = Math.max(1, Runtime.getRuntime().availableProcessors() / 2);
+        this.executor = new DefaultEventExecutorGroup(threads);
     }
 
     @Override
@@ -38,7 +50,12 @@ class FactoryImpl implements Factory {
 
     @Override
     public Debouncer debouncer() {
-        return new Debouncer(60, TimeUnit.SECONDS, executor());
+        return new DebouncerImpl(60, TimeUnit.SECONDS, executor());
+    }
+
+    @Override
+    public EventLoopGroup eventLoopGroup() {
+        return eventExecutorGroup;
     }
 
     @Override
@@ -49,6 +66,12 @@ class FactoryImpl implements Factory {
     @Override
     public RoomRegister roomRegister() {
         return roomReg;
+    }
+
+    @Override
+    public void shutdownGracefully() {
+        eventExecutorGroup.shutdownGracefully();
+        executor.shutdownGracefully();
     }
     
 }
