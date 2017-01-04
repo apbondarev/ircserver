@@ -2,6 +2,7 @@ package com.ab.ircserver.mongodb;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import org.junit.After;
@@ -47,10 +48,14 @@ public class DatabaseMongoDbIT {
     
     @Test
     public void findOrCreateRoom() throws Exception {
-        CompletableFuture<Room> future = db.findOrCreateRoom("roomName1");
-        Room room = future.get();
-        assertEquals("roomName1", room.name());
-        assertTrue(room.lastMessages().isEmpty());
+        Room room = new Room("roomName1", Collections.emptyList());
+        CompletableFuture<Void> futureSave = db.save(room);
+        futureSave.get();
+        
+        CompletableFuture<Room> futureFind = db.findOrCreateRoom("roomName1");
+        Room roomFound = futureFind.get();
+        assertEquals("roomName1", roomFound.name());
+        assertTrue(roomFound.lastMessages().isEmpty());
     }
     
     @Test

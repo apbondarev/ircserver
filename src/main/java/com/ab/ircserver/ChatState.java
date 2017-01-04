@@ -9,7 +9,7 @@ interface ChatState {
 	
 	void login(Session session, User user, byte[] password);
 	
-	void join(Session session, Room newRoom);
+	void join(Session session, RoomContext newRoomCtx);
 	
 	void printUsers(Session session);
 	
@@ -34,7 +34,7 @@ class Initial implements ChatState {
 	}
 
 	@Override
-	public void join(Session session, Room newRoom) {
+	public void join(Session session, RoomContext newRoomCtx) {
 		session.println("Start with: /login name password");
 	}
 
@@ -74,12 +74,13 @@ class LoggedIn implements ChatState {
 	}
 
 	@Override
-	public void join(Session session, Room newRoom) {
+	public void join(Session session, RoomContext newRoomCtx) {
+	    Room newRoom = newRoomCtx.room();
 		if (newRoom == Room.UNDEFINED) {
-			session.println("Wrong channel '" + newRoom.name() + "'.");
-		} else if (newRoom.addSession(session)) {
-			newRoom.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
-			session.setState(new Joined(user, newRoom));
+			session.println("Wrong channel '" + newRoomCtx.name() + "'.");
+		} else if (newRoomCtx.addSession(session)) {
+		    newRoomCtx.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoomCtx.name() + "'");
+			session.setState(new Joined(user, newRoomCtx));
 			List<Message> lastMessages = newRoom.lastMessages();
 			session.send(lastMessages);
 		} else {
@@ -113,11 +114,11 @@ class Joined implements ChatState {
 
 	private final User user;
 	
-	private final Room room;
+	private final RoomContext roomCtx;
 	
-	Joined(User user, Room room) {
+	Joined(User user, RoomContext roomCtx) {
 		this.user = user;
-		this.room = room;
+		this.roomCtx = roomCtx;
 	}
 	
 	@Override
@@ -126,15 +127,17 @@ class Joined implements ChatState {
 	}
 
 	@Override
-	public void join(Session session, Room newRoom) {
-		if (newRoom == Room.UNDEFINED) {
+	public void join(Session session, RoomContext newRoomCtx) {
+	    //Room room = roomCtx.room();
+	    Room newRoom = newRoomCtx.room();
+		if (newRoomCtx.room() == Room.UNDEFINED) {
 			session.println("Wrong channel '" + user.name() + "'.");
 			return;
-		} else if (newRoom.addSession(session)) {
-			room.removeSession(session);
-			room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.name() + "'");
-			newRoom.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
-			session.setState(new Joined(user, newRoom));
+		} else if (newRoomCtx.addSession(session)) {
+		    roomCtx.removeSession(session);
+		    roomCtx.notifyMessage("User '" + user.name() + "' has left the channel '" + roomCtx.name() + "'");
+		    newRoomCtx.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
+			session.setState(new Joined(user, newRoomCtx));
 			List<Message> lastMessages = newRoom.lastMessages();
 			session.send(lastMessages);
 			return;
@@ -147,21 +150,21 @@ class Joined implements ChatState {
 	@Override
 	public void printUsers(Session session) {
 	    Channel channel = session.channel();
-		room.users().forEach(u -> channel.write(u + "\r\n"));
+	    roomCtx.users().forEach(u -> channel.write(u + "\r\n"));
         channel.flush();
 	}
 
 	@Override
 	public void sendMessage(Session session, String text) {
 		Message msg = new Message(user.name(), text);
-		room.send(msg);
+		roomCtx.send(msg);
 	}
 	
 	@Override
 	public void leave(Session session) {
 	    session.setState(new Disconnected());
-		room.removeSession(session);
-		room.notifyMessage("User '" + user.name() + "' has left the channel '" + room.name() + "'");
+	    roomCtx.removeSession(session);
+	    roomCtx.notifyMessage("User '" + user.name() + "' has left the channel '" + roomCtx.name() + "'");
 		session.close("Disconnect.\r\n");
 	}
 	
@@ -177,7 +180,7 @@ class Disconnected implements ChatState {
 		// do nothing
 	}
 	
-	public void join(Session session, Room newRoom) {
+	public void join(Session session, RoomContext newRoomCtx) {
 		// do nothing
 	}
 	

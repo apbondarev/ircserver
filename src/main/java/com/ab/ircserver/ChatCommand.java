@@ -39,26 +39,29 @@ class CommandLogin implements ChatCommand {
 
 class CommandJoin implements ChatCommand {
 	private final String roomName;
+	private final Factory factory;
 	private final RoomRegister roomReg;
     private final Database db;
 	
 	CommandJoin(String roomName, Factory factory) {
         this.roomName = roomName;
+        this.factory = factory;
         this.roomReg = factory.roomRegister();
         this.db = factory.database();
 	}
 	
 	@Override
 	public void exec(Session session) {
-	    Optional<Room> room = roomReg.find(roomName);
-	    if (room.isPresent()) {
-	        session.join(room.get());
+	    Optional<RoomContext> roomCtx = roomReg.find(roomName);
+	    if (roomCtx.isPresent()) {
+	        session.join(roomCtx.get());
 	    } else {
 	        CompletableFuture<Room> future = db.findOrCreateRoom(roomName);
-	        future.whenComplete((oldOrNewRoom, e) -> {
+	        future.whenComplete((newRoom, e) -> {
 	            if (e == null) {
-	                Room roomNew = roomReg.findOrProduce(roomName, r -> oldOrNewRoom);
-	                session.join(roomNew);
+	                RoomContext oldOrNewRoomCtx = roomReg.findOrProduce(roomName, 
+	                        r -> new RoomContext(newRoom, factory) );
+	                session.join(oldOrNewRoomCtx);
 	            } else {
 	                session.println(e.getMessage());
 	            }

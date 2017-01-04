@@ -6,31 +6,31 @@ import java.util.function.Function;
 
 public interface RoomRegister {
 
-    Optional<Room> find(String roomName);
+    Optional<RoomContext> find(String roomName);
 
-    Room findOrProduce(String roomName, Function<String, Room> producer);
+    RoomContext findOrProduce(String roomName, Function<String, RoomContext> producer);
 
-    boolean remove(String roomName);
+    void remove(String name);
 
 }
 
 class RoomRegisterImpl implements RoomRegister {
 
-    private final ConcurrentHashMap<String, Room> register = new ConcurrentHashMap<>();
-
+    private final ConcurrentHashMap<String, RoomContext> register = new ConcurrentHashMap<>();
+    
     @Override
-    public Optional<Room> find(String roomName) {
+    public Optional<RoomContext> find(String roomName) {
         return Optional.ofNullable(register.get(roomName));
     }
     
     @Override
-    public Room findOrProduce(String roomName, Function<String, Room> producer) {
-        return register.computeIfAbsent(roomName, producer);
+    public RoomContext findOrProduce(String roomName, Function<String, RoomContext> producer) {
+        return register.computeIfAbsent(roomName, producer::apply);
     }
-    
+
     @Override
-    public boolean remove(String roomName) {
-        return register.remove(roomName) != null;
+    public void remove(String name) {
+        register.remove(name);
     }
-    
+        
 }

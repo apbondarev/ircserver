@@ -67,8 +67,8 @@ public class Session {
         state.login(this, user, password);
     }
 
-    public void join(Room room) {
-        state.join(this, room);
+    public void join(RoomContext roomCtx) {
+        state.join(this, roomCtx);
     }
 
     public void sendMessage(String text) {
