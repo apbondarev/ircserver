@@ -128,7 +128,6 @@ class Joined implements ChatState {
 
 	@Override
 	public void join(Session session, RoomContext newRoomCtx) {
-	    //Room room = roomCtx.room();
 	    Room newRoom = newRoomCtx.room();
 		if (newRoomCtx.room() == Room.UNDEFINED) {
 			session.println("Wrong channel '" + user.name() + "'.");

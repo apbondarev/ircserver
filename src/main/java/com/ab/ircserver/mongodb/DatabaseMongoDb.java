@@ -64,9 +64,14 @@ public class DatabaseMongoDb implements Database {
                     @Override
                     public void onResult(Document doc, Throwable e) {
                         if (e == null) {
-                            String nameNew = doc.get("name", String.class);
-                            Binary passwordNew = doc.get("password", Binary.class);
-                            User user = new User(nameNew, passwordNew.getData());
+                            User user;
+                            if (doc == null) {
+                                user = new User(name, password);
+                            } else {
+                                String nameNew = doc.get("name", String.class);
+                                Binary passwordNew = doc.get("password", Binary.class);
+                                user = new User(nameNew, passwordNew.getData());
+                            }
                             future.complete(user);
                         } else {
                             future.completeExceptionally(e);
@@ -88,16 +93,21 @@ public class DatabaseMongoDb implements Database {
                     @Override
                     public void onResult(Document doc, Throwable e) {
                         if (e == null) {
-                            String nameNew = doc.get("name", String.class);
-                            @SuppressWarnings("unchecked") List<Document> list = doc.get("messages", List.class);
-                            List<Message> messages = list.stream()
-                                .map(d -> {
-                                    String username = d.get("username", String.class);
-                                    String text = d.get("text", String.class);
-                                    return new Message(username, text);   
-                                })
-                                .collect(Collectors.toList());  
-                            Room room = new Room(nameNew, messages);
+                            Room room;
+                            if (doc == null) {
+                                room = new Room(roomName, Collections.emptyList());
+                            } else {
+                                String nameNew = doc.get("name", String.class);
+                                @SuppressWarnings("unchecked") List<Document> list = doc.get("messages", List.class);
+                                List<Message> messages = list.stream()
+                                    .map(d -> {
+                                        String username = d.get("username", String.class);
+                                        String text = d.get("text", String.class);
+                                        return new Message(username, text);   
+                                    })
+                                    .collect(Collectors.toList());  
+                                room = new Room(nameNew, messages);
+                            }
                             future.complete(room);
                         } else {
                             future.completeExceptionally(e);
