@@ -3,6 +3,8 @@ package com.ab.ircserver;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import io.netty.channel.Channel;
+
 /**
  * Interface for chat commands.
  * @author albondarev
@@ -59,9 +61,10 @@ class CommandJoin implements ChatCommand {
 	        CompletableFuture<Room> future = db.findOrCreateRoom(roomName);
 	        future.whenComplete((newRoom, e) -> {
 	            if (e == null) {
+	                Channel channel = session.channel();
 	                RoomContext oldOrNewRoomCtx = roomReg.findOrProduce(roomName, 
-	                        r -> new RoomContext(newRoom, factory) );
-	                session.join(oldOrNewRoomCtx);
+	                        r -> new RoomContext(newRoom, channel.eventLoop(), factory) );
+                    session.join(oldOrNewRoomCtx);
 	            } else {
 	                session.println(e.getMessage());
 	            }

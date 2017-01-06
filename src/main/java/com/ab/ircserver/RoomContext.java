@@ -7,6 +7,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import io.netty.channel.Channel;
+import io.netty.channel.EventLoop;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -20,9 +22,11 @@ public class RoomContext {
 	private final Debouncer debouncer;
     private final Database db;
     private final RoomRegister roomRegister;
+    private final EventLoop eventLoop;
 	
-	public RoomContext(Room room, Factory factory) {
+	public RoomContext(Room room, EventLoop eventLoop, Factory factory) {
         this.room = room;
+        this.eventLoop = eventLoop;
 	    this.channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	    this.debouncer = factory.debouncer();
 	    this.db = factory.database();
@@ -43,14 +47,35 @@ public class RoomContext {
 	        if (channels.size() >= Room.CAPACITY) {
 	            return false;
 	        }
-	        return channels.add(session.channel());
+	        channels.add(session.channel());
 	    } finally {
 	        lock.unlock();
 	    }
+	    if (!session.channel().eventLoop().equals(eventLoop)) {
+	        changeEventLoop(session.channel());
+	    }
+	    return true;
 	}
 
-	public boolean removeSession(Session session) {
-	    lock.lock();
+    /**
+     * Change {@link EventLoop} of the current channel to the common EventLoop of room.
+     * All users in a room are processed in the same EventLoop to reduce synchronization costs.
+     * @param channel
+     */
+    private void changeEventLoop(Channel channel) {
+        channel.deregister().addListener(futureDeregister -> {
+            if (futureDeregister.isSuccess()) {
+                eventLoop.register(channel).addListener(futureRegister -> {
+                    if (futureRegister.isSuccess()) {
+                        channels.add(channel);
+                    }
+                });
+            }
+        });
+    }
+
+    public boolean removeSession(Session session) {
+        lock.lock();
         try {
             boolean removed = channels.remove(session.channel());
             onRemoveUser();
