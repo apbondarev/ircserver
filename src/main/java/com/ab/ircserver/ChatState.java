@@ -2,6 +2,8 @@ package com.ab.ircserver;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
 
 import io.netty.channel.Channel;
 
@@ -78,13 +80,21 @@ class LoggedIn implements ChatState {
 	    Room newRoom = newRoomCtx.room();
 		if (newRoom == Room.UNDEFINED) {
 			session.println("Wrong channel '" + newRoomCtx.name() + "'.");
-		} else if (newRoomCtx.addSession(session)) {
-		    newRoomCtx.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoomCtx.name() + "'");
-			session.setState(new Joined(user, newRoomCtx));
-			List<Message> lastMessages = newRoom.lastMessages();
-			session.send(lastMessages);
 		} else {
-			session.println("Max " + Room.CAPACITY + " active clients per channel is allowed.");
+		    BiConsumer<Boolean, Throwable> action = (result, exception) -> {
+		        if (exception != null) {
+		            exception.printStackTrace();
+		        } else if (result) {
+        		    newRoomCtx.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoomCtx.name() + "'");
+        			session.setState(new Joined(user, newRoomCtx));
+        			List<Message> lastMessages = newRoom.lastMessages();
+        			session.send(lastMessages);
+        		} else {
+        			session.println("Max " + Room.CAPACITY + " active clients per channel is allowed.");
+        		}
+		    };
+		    CompletionStage<Boolean> future = newRoomCtx.addSession(session);
+		    future.whenComplete(action);
 		}
 	}
 
@@ -132,17 +142,25 @@ class Joined implements ChatState {
 		if (newRoomCtx.room() == Room.UNDEFINED) {
 			session.println("Wrong channel '" + user.name() + "'.");
 			return;
-		} else if (newRoomCtx.addSession(session)) {
-		    roomCtx.removeSession(session);
-		    roomCtx.notifyMessage("User '" + user.name() + "' has left the channel '" + roomCtx.name() + "'");
-		    newRoomCtx.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
-			session.setState(new Joined(user, newRoomCtx));
-			List<Message> lastMessages = newRoom.lastMessages();
-			session.send(lastMessages);
-			return;
 		} else {
-			session.println("Max " + Room.CAPACITY + " active clients per channel is allowed.");
-			return;
+		    BiConsumer<Boolean, Throwable> action = (result, exception) -> {
+		        if (exception != null) {
+                    exception.printStackTrace();
+                } else if (result) {
+		            roomCtx.removeSession(session);
+		            roomCtx.notifyMessage("User '" + user.name() + "' has left the channel '" + roomCtx.name() + "'");
+		            newRoomCtx.notifyMessage("User '" + user.name() + "' has joined the channel '" + newRoom.name() + "'");
+		            session.setState(new Joined(user, newRoomCtx));
+		            List<Message> lastMessages = newRoom.lastMessages();
+		            session.send(lastMessages);
+		            return;
+		        } else {
+		            session.println("Max " + Room.CAPACITY + " active clients per channel is allowed.");
+		            return;
+		        }
+		    };
+		    CompletionStage<Boolean> future = newRoomCtx.addSession(session);
+            future.whenComplete(action);
 		}
 	}
 

@@ -3,8 +3,10 @@ package com.ab.ircserver;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.netty.channel.Channel;
@@ -41,40 +43,60 @@ public class RoomContext {
 	    return room;
 	}
 	
-	public boolean addSession(Session session) {
-	    lock.lock();
-	    try {
-	        if (channels.size() >= Room.CAPACITY) {
-	            return false;
-	        }
-	        channels.add(session.channel());
-	    } finally {
-	        lock.unlock();
-	    }
-	    if (!session.channel().eventLoop().equals(eventLoop)) {
-	        changeEventLoop(session.channel());
-	    }
-	    return true;
-	}
-
     /**
-     * Change {@link EventLoop} of the current channel to the common EventLoop of room.
+     * Change {@link EventLoop} of the current channel to the common EventLoop of room
+     * and perform the action.
      * All users in a room are processed in the same EventLoop to reduce synchronization costs.
      * @param channel
+     * @param action
      */
-    private void changeEventLoop(Channel channel) {
+    private <R> CompletionStage<R> performInRoomEventLoop(Channel channel, Supplier<R> action) {
+        if (channel.eventLoop().equals(eventLoop)) {
+            R result = action.get();
+            return CompletableFuture.completedFuture(result);
+        }
+        
+        CompletableFuture<R> future = new CompletableFuture<>();
         channel.deregister().addListener(futureDeregister -> {
             if (futureDeregister.isSuccess()) {
                 eventLoop.register(channel).addListener(futureRegister -> {
                     if (futureRegister.isSuccess()) {
                         channels.add(channel);
+                        R result = action.get();
+                        future.complete(result);
+                    } else {
+                        future.completeExceptionally(futureRegister.cause());
                     }
                 });
+            } else {
+                future.completeExceptionally(futureDeregister.cause());
             }
         });
+        return future;
     }
 
-    public boolean removeSession(Session session) {
+    public CompletionStage<Boolean> addSession(Session session) {
+        return performInRoomEventLoop(session.channel(), () -> addSessionInternally(session));
+    }
+    
+    private boolean addSessionInternally(Session session) {
+        lock.lock();
+        try {
+            if (channels.size() >= Room.CAPACITY) {
+                return false;
+            }
+            channels.add(session.channel());
+        } finally {
+            lock.unlock();
+        }
+        return true;
+    }
+
+    public CompletionStage<Boolean> removeSession(Session session) {
+        return performInRoomEventLoop(session.channel(), () -> removeSessionInternally(session));
+    }
+    
+    private boolean removeSessionInternally(Session session) {
         lock.lock();
         try {
             boolean removed = channels.remove(session.channel());
