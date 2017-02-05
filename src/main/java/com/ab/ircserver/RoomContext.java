@@ -136,7 +136,7 @@ public class RoomContext {
 
     private void onRemoveUser() {
         debouncer.exec(() -> {
-            CompletableFuture<Void> future = db.save(room);
+            CompletionStage<Void> future = db.save(room);
             future.whenComplete((r, e) -> {
                 if (e == null) {
                     removeIfEmpty();

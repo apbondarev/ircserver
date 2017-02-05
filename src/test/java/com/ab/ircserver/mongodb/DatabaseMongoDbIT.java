@@ -40,7 +40,7 @@ public class DatabaseMongoDbIT {
     @Test
     public void findOrCreateUser() throws Exception {
         byte[] password = "password1".getBytes(StandardCharsets.UTF_8);
-        CompletableFuture<User> future = db.findOrCreateUser("name1", password);
+        CompletableFuture<User> future = (CompletableFuture<User>) db.findOrCreateUser("name1", password);
         User user = future.get();
         assertEquals("name1", user.name());
         assertTrue(user.isCorrectPassword(password));
@@ -49,10 +49,10 @@ public class DatabaseMongoDbIT {
     @Test
     public void findOrCreateRoom() throws Exception {
         Room room = new Room("roomName1", Collections.emptyList());
-        CompletableFuture<Void> futureSave = db.save(room);
+        CompletableFuture<Void> futureSave = (CompletableFuture<Void>) db.save(room);
         futureSave.get();
         
-        CompletableFuture<Room> futureFind = db.findOrCreateRoom("roomName1");
+        CompletableFuture<Room> futureFind = (CompletableFuture<Room>) db.findOrCreateRoom("roomName1");
         Room roomFound = futureFind.get();
         assertEquals("roomName1", roomFound.name());
         assertTrue(roomFound.lastMessages().isEmpty());
@@ -61,10 +61,10 @@ public class DatabaseMongoDbIT {
     @Test
     public void save() throws Exception {
         Room room = new Room("roomName1", Arrays.asList(new Message("username1", "text1")));
-        CompletableFuture<Void> futureSave = db.save(room);
+        CompletableFuture<Void> futureSave = (CompletableFuture<Void>) db.save(room);
         futureSave.get();
         
-        CompletableFuture<Room> futureFind = db.findOrCreateRoom("roomName1");
+        CompletableFuture<Room> futureFind = (CompletableFuture<Room>) db.findOrCreateRoom("roomName1");
         Room roomFound = futureFind.get();
         assertEquals("roomName1", roomFound.name());
         assertEquals(1, roomFound.lastMessages().size());

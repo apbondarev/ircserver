@@ -1,7 +1,7 @@
 package com.ab.ircserver;
 
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 import io.netty.channel.Channel;
 
@@ -28,7 +28,7 @@ class CommandLogin implements ChatCommand {
 	
 	@Override
 	public void exec(Session session) {
-	    CompletableFuture<User> future = db.findOrCreateUser(userName, password);
+	    CompletionStage<User> future = db.findOrCreateUser(userName, password);
         future.whenComplete((user, e) -> {
             if (e == null) {
                 session.login(user, password);
@@ -58,7 +58,7 @@ class CommandJoin implements ChatCommand {
 	    if (roomCtx.isPresent()) {
 	        session.join(roomCtx.get());
 	    } else {
-	        CompletableFuture<Room> future = db.findOrCreateRoom(roomName);
+	        CompletionStage<Room> future = db.findOrCreateRoom(roomName);
 	        future.whenComplete((newRoom, e) -> {
 	            if (e == null) {
 	                Channel channel = session.channel();

@@ -7,6 +7,7 @@ import static java.util.Arrays.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Collectors;
 
 import org.bson.Document;
@@ -54,7 +55,7 @@ public class DatabaseMongoDb implements Database {
     }
 
     @Override
-    public CompletableFuture<User> findOrCreateUser(String name, byte[] password) {
+    public CompletionStage<User> findOrCreateUser(String name, byte[] password) {
         CompletableFuture<User> future = new CompletableFuture<>();
         collectionUsers.findOneAndUpdate(eq("name", name),
                 combine(set("name", name),     
@@ -82,7 +83,7 @@ public class DatabaseMongoDb implements Database {
     }
 
     @Override
-    public CompletableFuture<Room> findOrCreateRoom(String roomName) {
+    public CompletionStage<Room> findOrCreateRoom(String roomName) {
         CompletableFuture<Room> future = new CompletableFuture<>();
         collectionRooms.findOneAndUpdate(
                 eq("name", roomName),
@@ -118,7 +119,7 @@ public class DatabaseMongoDb implements Database {
     }
 
     @Override
-    public CompletableFuture<Void> save(Room room) {
+    public CompletionStage<Void> save(Room room) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         List<Document> messages = room.lastMessages().stream()
                 .map(m -> new Document()
@@ -144,7 +145,7 @@ public class DatabaseMongoDb implements Database {
     }
 
     @Override
-    public CompletableFuture<Void> close() {
+    public CompletionStage<Void> close() {
         mongoClient.close();
         return CompletableFuture.completedFuture(null);
     }
