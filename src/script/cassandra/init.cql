@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS ircserver.users (
 CREATE TABLE IF NOT EXISTS ircserver.rooms (
 	name text,
 	ts timeuuid,
+	username text,
 	message text,
 	PRIMARY KEY (name, ts)
 ) WITH CLUSTERING ORDER BY (ts DESC);
